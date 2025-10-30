@@ -1,0 +1,52 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+
+<SplashScreen>:
+    name: "splash"
+
+    canvas.before:
+        Color:
+            rgba: secondary_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    on_touch_down: 
+        if self.collide_point(*args[1].pos): app.root.current = "login"
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 200
+        spacing: -50
+
+        Label:
+            text: "Welcome to"
+            font_size: 40
+            color: primary_color
+        
+        Widget:
+            height: 150
+            canvas:
+                Color:
+                    rgba: accent_color
+                Ellipse:
+                    pos: self.center_x - 50, self.center_y - 50
+                    size: 100, 100  # diameter = 100
+        Label:
+            text: "Kaibu Kids!"
+            font_size: 40
+            color: primary_color
+            
+
+    Label:
+        text: "Click anywhere to start"
+        font_size: 24
+        halign: 'center'
+        text_size: self.size
+        color: primary_color
+        size_hint_y: None
+        height: 30
+        pos: self.center_x - self.width/2, 25 # <-- '50' is the padding in pixels
+        pos_hint: {'center_x': 0.5} # <-- Keeps it centered horizontally

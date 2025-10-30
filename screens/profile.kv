@@ -1,0 +1,14 @@
+<ProfilePage>:
+    name: "profile"
+    GridLayout:
+        cols: 2
+        Label:
+            text: "Profile Page"
+        Button:
+            text: "Back to Dashboard"
+            on_press: app.root.current = "dashboard"
+        Button:
+            text: "Sign out"
+            on_press: app.root.current = "login"
+        Label:
+            text: ""
