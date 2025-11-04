@@ -124,11 +124,95 @@ class CameraPage(Screen):
 
 class ProfilePage(Screen):
     def remove_tag(self, tag_layout):
-        # tag_layout is the BoxLayout containing the label and '×' button
         parent = tag_layout.parent
         parent.remove_widget(tag_layout)
-        # Optional: update height dynamically
+        # Optional: update container height
         parent.height = parent.minimum_height if parent.children else 40
+
+    def add_tag_prompt(self, section):
+        # Create input popup
+        content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(10))
+        text_input = TextInput(
+            hint_text="Enter tag...",
+            font_size='16sp',
+            multiline=False,
+            size_hint_y=None,
+            height=dp(40)
+        )
+        btn_layout = BoxLayout(spacing=dp(10), size_hint_y=None, height=dp(40))
+        btn_submit = Button(text="Add")
+        btn_cancel = Button(text="Cancel")
+        btn_layout.add_widget(btn_submit)
+        btn_layout.add_widget(btn_cancel)
+        content.add_widget(text_input)
+        content.add_widget(btn_layout)
+
+        popup = Popup(title="Add Tag", content=content, size_hint=(0.7, 0.3))
+
+        def add_tag(instance):
+            tag_text = text_input.text.strip()
+            if tag_text:
+                self.add_tag_to_section(section, tag_text)
+            popup.dismiss()
+
+        def cancel(instance):
+            popup.dismiss()
+
+        btn_submit.bind(on_press=add_tag)
+        btn_cancel.bind(on_press=cancel)
+        popup.open()
+
+    def add_tag_to_section(self, section, tag_text):
+        # Create tag widget
+        tag_box = BoxLayout(
+            size_hint_y=None,
+            height=30,
+            spacing=5
+        )
+        tag_box.canvas.before.clear()
+        from kivy.graphics import Color, Rectangle
+        with tag_box.canvas.before:
+            Color(0.8, 0.8, 0.8, 1)
+            Rectangle(pos=tag_box.pos, size=tag_box.size)
+        tag_box.bind(pos=lambda obj, pos: setattr(obj.canvas.before.children[-1], 'pos', pos),
+                     size=lambda obj, size: setattr(obj.canvas.before.children[-1], 'size', size))
+
+        label = Label(
+            text=tag_text,
+            font_size='14sp',
+            color=[0, 0, 0, 1],
+            halign='left',
+            valign='center'
+        )
+        label.bind(size=label.setter('text_size'))
+
+        close_btn = Button(
+            text="×",
+            size_hint_x=None,
+            width=25,
+            background_normal='',
+            background_color=[1, 0.4, 0.4, 1],
+            color=[1, 1, 1, 1],
+            font_size='16sp'
+        )
+        close_btn.bind(on_press=lambda x: self.remove_tag(tag_box))
+
+        tag_box.add_widget(label)
+        tag_box.add_widget(close_btn)
+
+        # Add to correct section
+        if section == "likes":
+            container = self.ids.likes_container
+        elif section == "dislikes":
+            container = self.ids.dislikes_container
+        elif section == "goals":
+            container = self.ids.goals_container
+        else:
+            return
+
+        # Insert before the "+" button (which is the last child)
+        container.add_widget(tag_box, len(container.children) - 1)
+        container.height = container.minimum_height
 
 class ReportPage(Screen):
     pass
