@@ -113,11 +113,22 @@ class DashboardPage(Screen):
             )
             self.ids.meals_list.add_widget(item)
 
+class PictureMealPage(Screen):
+    pass
+
+class InputIngredientsPage(Screen):
+    pass
+
 class CameraPage(Screen):
     pass
 
 class ProfilePage(Screen):
-    pass
+    def remove_tag(self, tag_layout):
+        # tag_layout is the BoxLayout containing the label and '×' button
+        parent = tag_layout.parent
+        parent.remove_widget(tag_layout)
+        # Optional: update height dynamically
+        parent.height = parent.minimum_height if parent.children else 40
 
 class ReportPage(Screen):
     pass
@@ -310,9 +321,6 @@ class TranscriptPage(Screen):
 
     def close_popup(self, popup):
         popup.dismiss()
-
-class SuggestionsPage(Screen):
-    pass
 
 class WindowManager(ScreenManager):
     pass
