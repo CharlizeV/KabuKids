@@ -1,0 +1,438 @@
+#:import PRIMARY_COLOR colors.PRIMARY_COLOR
+#:import SECONDARY_COLOR colors.SECONDARY_COLOR
+#:import DARK_COLOR colors.DARK_COLOR
+
+<TranscriptPage>:
+    name: "transcript"
+    canvas.before:
+        Color:
+            rgba: PRIMARY_COLOR
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [20, 20]
+        spacing: 15
+
+        # --- Header: Title + Back Button ---
+        BoxLayout:
+            size_hint_y: None
+            height: 60
+            spacing: 10
+
+            Label:
+                text: "Transcript"
+                font_size: '28sp'
+                bold: True
+                color: DARK_COLOR  # ← Dark brown text
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Button:
+                size_hint_x: None
+                width: 50
+                background_normal: ''
+                background_color: 0.7, 0.7, 0.7, 1  # You can change this later
+                text: "<"
+                font_size: '24sp'
+                color: DARK_COLOR
+                on_press: app.root.current = "report"
+
+        # --- Divider ---
+        Widget:
+            size_hint_y: None
+            height: 2
+            canvas:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: (self.parent.x + self.parent.width * 0.005, self.y)
+                    size: (self.parent.width * 0.99, 2)
+
+        # --- Transcript Messages List ---
+        ScrollView:
+            BoxLayout:
+                id: transcript_content
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 15
+
+                # --- Message 1 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Kabu (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR  # ← Dark green (speaker name)
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "You haven't touched the broccoli yet. Just give it one bite—then we can talk about Naruto Kaizen."
+                        font_size: '16sp'
+                        color: DARK_COLOR  # ← Dark brown (message content)
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 2 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Name (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "But it looks weird... like a cursed spirit or something."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 3 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Kabu (11:56AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "Exactly! Defeat it like Yugi would. Just one bite and it's gone."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 4 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Name (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "Okay, hmm. It's not that bad."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 5 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Kabu (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "See? Power unlocked. Now you're leveling up."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 6 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Name (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "If I eat the carrots too, do I get a special move?"
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 7 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Kabu (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "Yep. Max power-up. And then we can play Mario Kart after dinner."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
+
+                # --- Message 8 ---
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [0, 0, 0, 10]
+
+                    Label:
+                        text: "Name (11:55AM):"
+                        font_size: '16sp'
+                        bold: True
+                        color: SECONDARY_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    Label:
+                        text: "Deal. But only if I get Yoshi."
+                        font_size: '16sp'
+                        color: DARK_COLOR
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: 30
+                        spacing: 10
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 0, 1, 0, 1
+                            on_press: root.open_like_popup()
+
+                        Button:
+                            size_hint_x: None
+                            width: 30
+                            background_normal: ''
+                            background_color: 1, 0, 0, 1
+                            on_press: root.open_dislike_popup()
