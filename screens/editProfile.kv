@@ -1,13 +1,57 @@
 <EditProfilePage>:
     name: "editProfile"
-    GridLayout:
-        cols: 2
-        Label:
-            text: "Edit Profile"
-        Button:
-            text: "Save and Go to Profile"
-            on_press: app.root.current = "profile"
-        Label:
-            text: ""
-        Label:
-            text: ""
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [0, 0, 0, 0]  # [left, top, right, bottom]
+        spacing: 40
+
+        # --- Dashboard, Profile, Edit ---
+        GridLayout:
+            padding: [10, 10, 10, 10]  # [left, top, right, bottom]
+            cols: 3
+            size_hint_y: None
+            height: 60  # Fixed header height
+
+            # Left square (aligned left)
+            Button:
+                size_hint_x: None
+                width: 40
+                background_color: 0, 0, 0, 0  # Transparent background
+                on_release: app.root.current = "profile"  # ← Switches to dashboard screen
+
+                canvas.before:
+                    Color:
+                        rgba: 0.2, 0.6, 1, 1  # Blue
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            # Center text
+            Label:
+                text: "Edit Profile"
+                font_size: 20
+                color: 0, 0, 0, 1  # Black text
+                halign: 'center'
+                valign: 'middle'   # ← use 'middle', not 'center'
+                text_size: self.size  # ← critical for alignment!
+
+            # Right square (aligned right)
+            Button:
+                size_hint_x: None
+                width: 40
+                background_color: 0, 0, 0, 0  # Transparent background
+                on_release: app.root.current = "profile"
+
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.3, 0.3, 1  # Red
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
