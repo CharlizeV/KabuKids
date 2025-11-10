@@ -3,10 +3,15 @@
 #:include screens/login.kv
 #:include screens/make_account.kv
 #:include screens/dashboard.kv
-#:include screens/camera.kv
 #:include screens/profile.kv
 #:include screens/report.kv
 #:include screens/transcript.kv
+
+#:include screens/portionSizeBefore.kv
+#:include screens/portionSizeAfter.kv
+#:include screens/inputIngredients.kv
+#:include screens/editProfile.kv
+#:include screens/session.kv
 
 WindowManager:
     SplashScreen:
@@ -15,7 +20,12 @@ WindowManager:
     DashboardPage:
     PictureMealPage
     InputIngredientsPage
-    CameraPage:
     ProfilePage:
     ReportPage:
     TranscriptPage:
+
+    PortionSizeBeforePage:
+    PortionSizeAfterPage:
+    InputIngredientsPage:
+    EditProfilePage:
+    SessionPage:

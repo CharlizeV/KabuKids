@@ -9,279 +9,356 @@
 
     BoxLayout:
         orientation: 'vertical'
-        padding: [20, 20]
-        spacing: 15
+        padding: [0, 0, 0, 0]  # [left, top, right, bottom]
+        spacing: 40
 
-        # --- Top Bar: Profile Pic + Name/Birthday + Back Button ---
-        BoxLayout:
+        # --- Dashboard, Profile, Edit ---
+        GridLayout:
+            padding: [10, 10, 10, 10]  # [left, top, right, bottom]
+            cols: 3
             size_hint_y: None
-            height: 70
-            spacing: 15
+            height: 60  # Fixed header height
 
-            # Profile Picture Placeholder (gray square)
-            Widget:
+            # Left square (aligned left)
+            Button:
                 size_hint_x: None
-                width: 60
-                canvas:
+                width: 40
+                background_color: 0, 0, 0, 0  # Transparent background
+                on_release: app.root.current = "dashboard"  # ← Switches to dashboard screen
+
+                canvas.before:
                     Color:
-                        rgba: 0.8, 0.8, 0.8, 1
+                        rgba: 0.2, 0.6, 1, 1  # Blue
                     Rectangle:
                         pos: self.pos
                         size: self.size
 
-            # Name and Birthday
-            BoxLayout:
-                orientation: 'vertical'
+            # Center text
+            Label:
+                text: "Profile"
+                font_size: 20
+                color: 0, 0, 0, 1  # Black text
+                halign: 'center'
+                valign: 'middle'   # ← use 'middle', not 'center'
+                text_size: self.size  # ← critical for alignment!
+
+            # Right square (aligned right)
+            Button:
+                size_hint_x: None
+                width: 40
+                background_color: 0, 0, 0, 0  # Transparent background
+                on_release: app.root.current = "editProfile"
+
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.3, 0.3, 1  # Red
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        # --- Add a Placeholder for Profile Content ---
+        BoxLayout:
+            orientation: 'vertical'
+            halign: 'center'
+            size_hint_y: None
+            height: 180
+            spacing: 10
+
+            Widget:
+                size_hint: None, None
+                size: 120, 120
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                    Ellipse:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                text: "Charlize Villaflores"
+                halign: 'center'
+                font_size: 30
+                color: 0, 0, 0, 1
+                size_hint_y: None
+                height: 40 
+            
+        ScrollView:
+            GridLayout:
+                cols: 1                             # ← MUST specify cols or rows
+                size_hint_y: None 
+                height: self.minimum_height  
+                padding: [40, 20, 40, 20]            # [left, top, right, bottom]
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(20), dp(20), dp(0), dp(0)]
+
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height   
+                    spacing: 10
+
+                    Label:
+                        text: "Username"
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+
+                    Label:
+                        text: "charlize_v"
+                        halign: 'right'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+                    
+                    Label:
+                        text: "Birthday"
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+
+                    Label:
+                        text: "June 14, 2004"
+                        halign: 'right'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+                    
+                    Label:
+                        text: "Gender"
+                        bold: True
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+
+                    Label:
+                        text: "Female"
+                        halign: 'right'
+                        valign: 'middle'
+                        text_size: self.size
+                        font_size: 20
+                        color: 0, 0, 0, 1
+                        size_hint_y: None
+                        height: 30
+
+                #-- Likes of the user ---  
+
                 Label:
-                    text: "Alex Rivera"
-                    font_size: '18sp'
+                    text: " "
                     bold: True
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'middle'
                     text_size: self.size
+                    halign: 'left'
+                    font_size: 1
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 30
+
                 Label:
-                    text: "Birthday: March 12, 2015"
-                    font_size: '14sp'
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'middle'
+                    text: "My Likes"
+                    bold: True
                     text_size: self.size
+                    halign: 'left'
+                    font_size: 25
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 40
+                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
+                    
+                GridLayout:
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height  
+                    padding: [20, 20, 20, 20]
+                    spacing: 8
+                    canvas.before:
+                        Color:
+                            rgba: 0.5, 0.9, 0.5, 1 
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(20), dp(20), dp(20), dp(20)]
 
-            # Spacer
-            Widget:
+                    Label:
+                        text: "• Painting"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Reading"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Traveling"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                
+                
+                
+                #-- Dislikes of the user ---  
 
-            # Back Button
-            Button:
-                size_hint_x: None
-                width: 50
-                background_normal: ''
-                background_color: 0.7, 0.7, 0.7, 1
-                text: "<"
-                font_size: '24sp'
-                color: 0, 0, 0, 1
-                on_press: app.root.current = "dashboard"
-
-        # --- Divider (80% width) ---
-        Widget:
-            size_hint_y: None
-            height: 2
-            canvas:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: (self.parent.x + self.parent.width * 0.1, self.y)
-                    size: (self.parent.width * 0.8, 2)
-
-        # --- LIKES ---
-        Label:
-            text: "LIKES:"
-            font_size: '20sp'
-            bold: True
-            color: 0, 0, 0, 1
-            halign: 'left'
-            size_hint_y: None
-            height: 35
-
-        BoxLayout:
-            id: likes_container
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height if self.children else 40
-            padding: [10, 10]
-            spacing: 8
-            canvas.before:
-                Color:
-                    rgba: 0.9, 0.9, 0.9, 1  # Light gray background
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-            # Tags will be added here dynamically
-            # Pre-filled example tags:
-            BoxLayout:
-                size_hint_y: None
-                height: 30
-                spacing: 5
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.8, 0.8, 1  # Gray tag box
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
                 Label:
-                    text: "anime"
-                    font_size: '14sp'
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'center'
+                    text: " "
+                    bold: True
                     text_size: self.size
-                Button:
-                    text: "×"
-                    size_hint_x: None
-                    width: 25
-                    background_normal: ''
-                    background_color: 1, 0.4, 0.4, 1
-                    color: 1, 1, 1, 1
-                    font_size: '16sp'
-                    on_press: root.remove_tag(self.parent)
+                    halign: 'left'
+                    font_size: 1
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 30
 
-            BoxLayout:
-                size_hint_y: None
-                height: 30
-                spacing: 5
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.8, 0.8, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
                 Label:
-                    text: "games"
-                    font_size: '14sp'
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'center'
+                    text: "My Dislikes"
+                    bold: True
                     text_size: self.size
-                Button:
-                    text: "×"
-                    size_hint_x: None
-                    width: 25
-                    background_normal: ''
-                    background_color: 1, 0.4, 0.4, 1
-                    color: 1, 1, 1, 1
-                    font_size: '16sp'
-                    on_press: root.remove_tag(self.parent)
+                    halign: 'left'
+                    font_size: 25
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 40
+                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
+                    
+                GridLayout:
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height  
+                    padding: [20, 20, 20, 20]
+                    spacing: 8
+                    canvas.before:
+                        Color:
+                            rgba: 0.5, 0.9, 0.5, 1 
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(20), dp(20), dp(20), dp(20)]
 
-            # Add Tag Button (+)
-            Button:
-                size_hint_y: None
-                height: 30
-                text: "+"
-                font_size: '20sp'
-                background_normal: ''
-                background_color: 0.85, 0.85, 0.85, 1
-                color: 0, 0, 0, 1
-                on_press: root.add_tag_prompt("likes")
+                    Label:
+                        text: "• insects"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Horror"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Jumpscares"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
 
-        # --- DISLIKES ---
-        Label:
-            text: "DISLIKES:"
-            font_size: '20sp'
-            bold: True
-            color: 0, 0, 0, 1
-            halign: 'left'
-            size_hint_y: None
-            height: 35
+                #-- Goals of the user ---  
 
-        BoxLayout:
-            id: dislikes_container
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height if self.children else 40
-            padding: [10, 10]
-            spacing: 8
-            canvas.before:
-                Color:
-                    rgba: 0.9, 0.9, 0.9, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-            BoxLayout:
-                size_hint_y: None
-                height: 30
-                spacing: 5
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.8, 0.8, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
                 Label:
-                    text: "broccoli"
-                    font_size: '14sp'
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'center'
+                    text: " "
+                    bold: True
                     text_size: self.size
-                Button:
-                    text: "×"
-                    size_hint_x: None
-                    width: 25
-                    background_normal: ''
-                    background_color: 1, 0.4, 0.4, 1
-                    color: 1, 1, 1, 1
-                    font_size: '16sp'
-                    on_press: root.remove_tag(self.parent)
+                    halign: 'left'
+                    font_size: 1
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 30
 
-            Button:
-                size_hint_y: None
-                height: 30
-                text: "+"
-                font_size: '20sp'
-                background_normal: ''
-                background_color: 0.85, 0.85, 0.85, 1
-                color: 0, 0, 0, 1
-                on_press: root.add_tag_prompt("dislikes")
-
-        # --- GOALS ---
-        Label:
-            text: "GOALS:"
-            font_size: '20sp'
-            bold: True
-            color: 0, 0, 0, 1
-            halign: 'left'
-            size_hint_y: None
-            height: 35
-
-        BoxLayout:
-            id: goals_container
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height if self.children else 40
-            padding: [10, 10]
-            spacing: 8
-            canvas.before:
-                Color:
-                    rgba: 0.9, 0.9, 0.9, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-            BoxLayout:
-                size_hint_y: None
-                height: 30
-                spacing: 5
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.8, 0.8, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
                 Label:
-                    text: "Eat more veggies"
-                    font_size: '14sp'
-                    color: 0, 0, 0, 1
-                    halign: 'left'
-                    valign: 'center'
+                    text: "My Goals"
+                    bold: True
                     text_size: self.size
-                Button:
-                    text: "×"
-                    size_hint_x: None
-                    width: 25
-                    background_normal: ''
-                    background_color: 1, 0.4, 0.4, 1
-                    color: 1, 1, 1, 1
-                    font_size: '16sp'
-                    on_press: root.remove_tag(self.parent)
+                    halign: 'left'
+                    font_size: 25
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: 40
+                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
+                    
+                GridLayout:
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height  
+                    padding: [20, 20, 20, 20]
+                    spacing: 8
+                    canvas.before:
+                        Color:
+                            rgba: 0.5, 0.9, 0.5, 1 
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(20), dp(20), dp(20), dp(20)]
 
-            Button:
-                size_hint_y: None
-                height: 30
-                text: "+"
-                font_size: '20sp'
-                background_normal: ''
-                background_color: 0.85, 0.85, 0.85, 1
-                color: 0, 0, 0, 1
-                on_press: root.add_tag_prompt("goals")
+                    Label:
+                        text: "• Eat faster"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Eat even faster"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height
+                    Label:
+                        text: "• Fly"
+                        halign: 'left'
+                        valign: 'top'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                        font_size: 18
+                        size_hint_y: None
+                        height: self.texture_size[1]  # ← Sizes to text height

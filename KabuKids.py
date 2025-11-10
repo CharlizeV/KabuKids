@@ -119,9 +119,6 @@ class PictureMealPage(Screen):
 class InputIngredientsPage(Screen):
     pass
 
-class CameraPage(Screen):
-    pass
-
 class ProfilePage(Screen):
     def remove_tag(self, tag_layout):
         parent = tag_layout.parent
@@ -405,6 +402,21 @@ class TranscriptPage(Screen):
 
     def close_popup(self, popup):
         popup.dismiss()
+
+class PortionSizeBeforePage(Screen):
+    pass
+
+class PortionSizeAfterPage(Screen):
+    pass
+
+class InputIngredientsPage(Screen):
+    pass
+
+class EditProfilePage(Screen):
+    pass
+
+class SessionPage(Screen):
+    pass
 
 class WindowManager(ScreenManager):
     pass
