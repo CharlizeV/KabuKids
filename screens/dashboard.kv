@@ -54,6 +54,17 @@
                 size_hint_x: None
                 width: dp(80)
                 on_press: app.root.current = "profile"
+
+        # ====== DIVIDER LINE ======
+        Widget:
+            size_hint_y: None
+            height: dp(2)
+            canvas:
+                Color:
+                    rgba: 0.8, 0.8, 0.8, 1  # Light gray
+                Rectangle:
+                    pos: self.pos
+                    size: self.width, dp(2)
         
         # Main content area
         ScrollView:
@@ -72,7 +83,7 @@
                     size_hint_x: 0.99  # 90% of parent width
                     pos_hint: {'center_x': 0.5}
                     background_color: 0.2, 0.6, 1, 1  # Blue color
-                    on_press: app.root.current = "inputIngredients"
+                    on_press: app.root.current = "inputIngredientsBM"
                 
                 # TUTORIAL section
                 Label:

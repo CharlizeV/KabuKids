@@ -4,7 +4,7 @@
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: self.minimum_height  # Critical for ScrollView to work
+            height: self.minimum_height
             padding: [20, 20]
             spacing: 15
 
@@ -29,9 +29,41 @@
                     background_color: 0.2, 0.6, 1, 1
                     on_press: app.root.current = "dashboard"
 
+            # --- User Info (Name & Age) ---
+            Label:
+                text: root.user_name
+                font_size: '20sp'
+                bold: True
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            Label:
+                text: root.user_age
+                font_size: '14sp'
+                color: 0.5, 0.5, 0.5, 1
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            # --- Divider after user info ---
+            Widget:
+                size_hint_y: None
+                height: 2
+                canvas:
+                    Color:
+                        rgba: 0.7, 0.7, 0.7, 1
+                    Rectangle:
+                        pos: (self.parent.x + self.parent.width * 0.005, self.y)
+                        size: (self.parent.width * 0.99, 2)
+
             # --- Date & Time ---
             Label:
-                text: "October 22, 2025"
+                text: root.date
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -40,7 +72,7 @@
                 height: self.texture_size[1]
 
             Label:
-                text: "Start Time - End Time"
+                text: root.time_range
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -48,7 +80,7 @@
                 size_hint_y: None
                 height: self.texture_size[1]
 
-            # --- Divider (99% width) ---
+            # --- Divider ---
             Widget:
                 size_hint_y: None
                 height: 2
@@ -70,9 +102,9 @@
                 size_hint_y: None
                 height: self.texture_size[1]
 
-            # --- SUMMARY Content (wraps to full width) ---
+            # --- SUMMARY Content ---
             Label:
-                text: "During the meal, the child showed interest in vegetables but refused protein sources. They engaged positively with caregivers and used utensils independently for most of the meal. This behavior suggests developing autonomy and selective food preferences, which are common at this developmental stage."
+                text: root.summary_text
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -91,9 +123,9 @@
                         pos: (self.parent.x + self.parent.width * 0.005, self.y)
                         size: (self.parent.width * 0.99, 2)
 
-            # --- FOOD SUGGESTIONS Header ---
+            # --- FOOD BEFORE MEAL ---
             Label:
-                text: "FOOD SUGGESTIONS"
+                text: "FOOD BEFORE MEAL"
                 font_size: '22sp'
                 bold: True
                 halign: 'left'
@@ -102,7 +134,84 @@
                 size_hint_y: None
                 height: self.texture_size[1]
 
-            # --- Food Suggestions Box ---
+            Label:
+                text: root.food_before_text
+                font_size: '16sp'
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            # --- FOOD NOT FINISHED ---
+            Label:
+                text: "FOOD NOT FINISHED"
+                font_size: '22sp'
+                bold: True
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            Label:
+                text: root.food_not_finished_text
+                font_size: '16sp'
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            # --- Portion Images ---
+            Label:
+                text: "PORTION IMAGES"
+                font_size: '22sp'
+                bold: True
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 200
+                spacing: 10
+
+                Image:
+                    source: root.portion_before_source
+                    fit_mode: "contain"
+                    allow_stretch: True
+
+                Image:
+                    source: root.portion_after_source
+                    fit_mode: "contain"
+                    allow_stretch: True
+
+            # --- Divider ---
+            Widget:
+                size_hint_y: None
+                height: 2
+                canvas:
+                    Color:
+                        rgba: 0.7, 0.7, 0.7, 1
+                    Rectangle:
+                        pos: (self.parent.x + self.parent.width * 0.005, self.y)
+                        size: (self.parent.width * 0.99, 2)
+
+            # --- INGREDIENT SUGGESTIONS Header ---
+            Label:
+                text: "INGREDIENT SUGGESTIONS"
+                font_size: '22sp'
+                bold: True
+                halign: 'left'
+                valign: 'top'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
             BoxLayout:
                 size_hint_y: None
                 height: self.minimum_height
@@ -119,18 +228,8 @@
                     size_hint_y: None
                     height: self.minimum_height
                     spacing: 12
-
                     Label:
-                        text: "• Broccoli\\n    - Healthy for the child; rich in fiber, vitamins A, C, and K. It supports immune function and digestion."
-                        font_size: '16sp'
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.width - 30, None
-                        size_hint_y: None
-                        height: self.texture_size[1]
-
-                    Label:
-                        text: "• Sweet Potato\\n    - Naturally sweet and soft when cooked, making it appealing to young children. High in beta-carotene for eye health."
+                        text: root.formatted_ingredient_suggestions
                         font_size: '16sp'
                         halign: 'left'
                         valign: 'top'
@@ -160,7 +259,6 @@
                 size_hint_y: None
                 height: self.texture_size[1]
 
-            # --- Conversation Suggestions Box ---
             BoxLayout:
                 size_hint_y: None
                 height: self.minimum_height
@@ -177,9 +275,8 @@
                     size_hint_y: None
                     height: self.minimum_height
                     spacing: 12
-
                     Label:
-                        text: "• 'What was your favorite part of lunch today?'"
+                        text: root.formatted_conversation_suggestions
                         font_size: '16sp'
                         halign: 'left'
                         valign: 'top'
@@ -187,21 +284,12 @@
                         size_hint_y: None
                         height: self.texture_size[1]
 
-                    Label:
-                        text: "• 'Can you tell me one new food you tried or would like to try next time?'"
-                        font_size: '16sp'
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.width - 30, None
-                        size_hint_y: None
-                        height: self.texture_size[1]
-
-            # Spacer to add bottom margin before transcript button
+            # Spacer
             Widget:
                 size_hint_y: None
                 height: 20
 
-            # --- TRANSCRIPT Button (Rounded, full-width appearance) ---
+            # --- TRANSCRIPT Button ---
             Button:
                 text: "TRANSCRIPT"
                 size_hint_y: None

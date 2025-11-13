@@ -1,0 +1,72 @@
+<InputIngredientsAMPage>:
+    name: "inputIngredientsAM"
+
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [0, 0, 0, 0]
+        spacing: 0
+
+        # --- Header ---
+        GridLayout:
+            cols: 3
+            size_hint_y: None
+            height: 60
+            padding: [10, 10, 10, 10]
+
+            Button:
+                size_hint_x: None
+                width: 40
+                background_color: 0, 0, 0, 0
+                on_release: app.root.current = "dashboard"
+                canvas.before:
+                    Color:
+                        rgba: 0.2, 0.6, 1, 1  # Blue back arrow
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Label:
+                text: "Input Food After Meal"
+                font_size: 20
+                color: 0, 0, 0, 1
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Button:
+                size_hint_x: None
+                width: 40
+                text: "→"
+                background_color: 0, 0, 0, 0
+                color: 0.8, 0.3, 0.3, 1
+                font_size: 20
+                on_release: app.root.current = "portionSizeAfter"
+
+        # --- Instruction Label ---
+        Label:
+            text: "Check the boxes of the food the child has finished."
+            font_size: 16
+            color: 0, 0, 0, 1
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: None
+            height: 40
+            padding: [20, 0]
+
+        # --- Scrollable Checkbox List ---
+        ScrollView:
+            BoxLayout:
+                id: food_checkboxes
+                orientation: 'vertical'
+                padding: [20, 10]
+                spacing: 8
+                size_hint_y: None
+                height: self.minimum_height
