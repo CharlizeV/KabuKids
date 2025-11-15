@@ -7,7 +7,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.metrics import dp
-from kivy.graphics import Color, RoundedRectangle
+from kivy.graphics import Color, RoundedRectangle, Ellipse, Rectangle
 from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.uix.checkbox import CheckBox
@@ -19,6 +19,26 @@ import os
 import certifi
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+
+
+from kivy.core.window import Window
+from kivy.utils import platform
+from kivy.uix.stencilview import StencilView
+
+import uuid
+from datetime import datetime
+
+from kivy.core.window import Window
+from kivy.uix.image import Image
+
+import uuid
+from datetime import datetime
+
+try:
+    from tkinter import Tk
+    from tkinter.filedialog import askopenfilename
+except ImportError:
+    pass
 
 # ====== MongoDB Setup ======
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
@@ -34,6 +54,7 @@ meals_col = db["Meals"]
 
 # Global variable to hold fetched reports (will be filled after async load)
 SAMPLE_REPORTS = {}
+
 
 def fetch_reports_from_db(callback):
     """Fetch all meal reports from MongoDB (run in background thread)."""
@@ -56,9 +77,6 @@ def add_rounded_background(widget, radius=8):
         )
     widget.bind(pos=lambda obj, pos: setattr(widget.rect, 'pos', pos))
     widget.bind(size=lambda obj, size: setattr(widget.rect, 'size', size))
-
-
-
 
 
 # Helper function to create a rounded rectangle background
@@ -140,7 +158,152 @@ class LoginPage(Screen):
     pass
 
 class MakeAccountPage(Screen):
-    pass
+    def remove_tag(self, tag_layout):
+        parent = tag_layout.parent
+        parent.remove_widget(tag_layout)
+        parent.height = parent.minimum_height if parent.children else 40
+
+    def add_tag_prompt(self, section):
+        content = BoxLayout(orientation='vertical', padding=15, spacing=10)
+        text_input = TextInput(
+            hint_text="Enter tag...",
+            font_size='16sp',
+            multiline=False,
+            size_hint_y=None,
+            height=40
+        )
+        btn_layout = BoxLayout(spacing=10, size_hint_y=None, height=40)
+        btn_submit = Button(text="Add")
+        btn_cancel = Button(text="Cancel")
+        btn_layout.add_widget(btn_submit)
+        btn_layout.add_widget(btn_cancel)
+        content.add_widget(text_input)
+        content.add_widget(btn_layout)
+
+        popup = Popup(title="Add Tag", content=content, size_hint=(0.7, 0.3))
+
+        def add_tag(instance):
+            tag_text = text_input.text.strip()
+            if tag_text:
+                self.add_tag_to_section(section, tag_text)
+            popup.dismiss()
+
+        def cancel(instance):
+            popup.dismiss()
+
+        btn_submit.bind(on_press=add_tag)
+        btn_cancel.bind(on_press=cancel)
+        popup.open()
+
+    def add_tag_to_section(self, section, tag_text):
+        tag_box = BoxLayout(size_hint_y=None, height=30, spacing=5)
+
+        # Background for tag box
+        with tag_box.canvas.before:
+            Color(0.8, 0.8, 0.8, 1)
+            tag_box.rect = Rectangle(pos=tag_box.pos, size=tag_box.size)
+
+        tag_box.bind(
+            pos=lambda obj, pos: setattr(obj.rect, 'pos', pos),
+            size=lambda obj, size: setattr(obj.rect, 'size', size)
+        )
+
+        label = Label(
+            text=tag_text,
+            font_size='14sp',
+            color=[0, 0, 0, 1],
+            halign='left',
+            valign='center'
+        )
+        label.bind(size=label.setter('text_size'))
+
+        close_btn = Button(
+            text="×",
+            size_hint_x=None,
+            width=25,
+            background_normal='',
+            background_color=[1, 0.4, 0.4, 1],
+            color=[1, 1, 1, 1],
+            font_size='16sp'
+        )
+        close_btn.bind(on_press=lambda x: self.remove_tag(tag_box))
+
+        tag_box.add_widget(label)
+        tag_box.add_widget(close_btn)
+
+        if section == "likes":
+            container = self.ids.likes_container
+        elif section == "dislikes":
+            container = self.ids.dislikes_container
+        elif section == "goals":
+            container = self.ids.goals_container
+        else:
+            return
+
+        # Insert before the "+" button (last child)
+        container.add_widget(tag_box, len(container.children) - 1)
+        container.height = container.minimum_height
+
+    def get_tags_from_container(self, container_id):
+        container = self.ids[container_id]
+        tags = []
+        # container.children is LIFO (last added first). Find the Label inside each tag BoxLayout.
+        for child in container.children:
+            if isinstance(child, BoxLayout):
+                label_widget = next((w for w in child.children if isinstance(w, Label)), None)
+                if label_widget:
+                    tags.append(label_widget.text)
+        tags.reverse()  # optional: reverse to match visual order (first-added first)
+        return tags
+
+    def show_message(self, message):
+        popup = Popup(
+            title="",
+            content=Label(text=message, halign='center', text_size=(300, None)),
+            size_hint=(0.6, 0.3)
+        )
+        popup.open()
+
+    def save_profile(self):
+        try:
+            name = self.ids.name_input.text.strip()
+            birthday = self.ids.birthday_input.text.strip()
+            gender = self.ids.gender_input.text.strip()
+
+            if not name:
+                self.show_message("Please enter a name.")
+                return
+
+            likes = self.get_tags_from_container("likes_container")
+            dislikes = self.get_tags_from_container("dislikes_container")
+            goals = self.get_tags_from_container("goals_container")
+
+            # Get image path from app
+            app = App.get_running_app()
+            image_path = app.profile_image_path
+
+            child_doc = {
+                "_id": str(uuid.uuid4()),
+                "name": name,
+                "birthday": birthday,
+                "gender": gender,
+                "likes": likes,
+                "dislikes": dislikes,
+                "goals": goals,
+                "profile_picture": image_path,
+                "created_at": datetime.utcnow(),
+            }
+
+            # Save to MongoDB
+            result = db["Children"].insert_one(child_doc)
+            print(f"✅ Child profile saved with ID: {result.inserted_id}")
+
+            self.show_message("Profile saved successfully!")
+            self.manager.current = "login"
+
+        except Exception as e:
+            print("❌ Error saving profile:", e)
+            self.show_message("Failed to save. Check your internet connection.")
 
 class DashboardPage(Screen):
     _reports_loaded = False
@@ -181,8 +344,6 @@ class DashboardPage(Screen):
             )
             self.ids.meals_list.add_widget(item)
 
-class PictureMealPage(Screen):
-    pass
 
 class ProfilePage(Screen):
     def remove_tag(self, tag_layout):
@@ -685,9 +846,41 @@ class WindowManager(ScreenManager):
 kv = Builder.load_file("KabuKids.kv")
 
 class MultiScreenApp(App):
+    profile_image_path = StringProperty("")
+
     def build(self):
-        self.selected_meal_id = None
-        return kv
+        # Make sure your ScreenManager includes 'make_account'
+        from kivy.lang import Builder
+        return Builder.load_file('KabuKids.kv')  # or use Builder.load_string below
+
+    def select_profile_picture(self):
+        if platform in ('android', 'ios'):
+            from plyer import filechooser
+            filechooser.open_file(
+                on_selection=self._on_image_selected,
+                filters=["*jpg", "*jpeg", "*png", "*bmp", "*gif"]
+            )
+        else:
+            # Desktop (Windows/macOS/Linux)
+            try:
+                Tk().withdraw()
+                path = askopenfilename(
+                    title="Select Profile Picture",
+                    filetypes=[("Image Files", "*.png *.jpg *.jpeg *.bmp *.gif")]
+                )
+                if path:
+                    self._on_image_selected([path])
+            except Exception as e:
+                print("File chooser error:", e)
+                self._on_image_selected([])
+
+    def _on_image_selected(self, selection):
+        if selection:
+            self.profile_image_path = selection[0]
+            make_screen = self.root.get_screen('make_account')
+            img_widget = make_screen.ids.profile_image
+            img_widget.source = self.profile_image_path
+            img_widget.reload()
     
 if __name__ == '__main__':
     MultiScreenApp().run()
