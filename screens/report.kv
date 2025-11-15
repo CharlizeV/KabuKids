@@ -29,37 +29,6 @@
                     background_color: 0.2, 0.6, 1, 1
                     on_press: app.root.current = "dashboard"
 
-            # --- User Info (Name & Age) ---
-            Label:
-                text: root.user_name
-                font_size: '20sp'
-                bold: True
-                halign: 'left'
-                valign: 'top'
-                text_size: self.width, None
-                size_hint_y: None
-                height: self.texture_size[1]
-
-            Label:
-                text: root.user_age
-                font_size: '14sp'
-                color: 0.5, 0.5, 0.5, 1
-                halign: 'left'
-                valign: 'top'
-                text_size: self.width, None
-                size_hint_y: None
-                height: self.texture_size[1]
-
-            # --- Divider after user info ---
-            Widget:
-                size_hint_y: None
-                height: 2
-                canvas:
-                    Color:
-                        rgba: 0.7, 0.7, 0.7, 1
-                    Rectangle:
-                        pos: (self.parent.x + self.parent.width * 0.005, self.y)
-                        size: (self.parent.width * 0.99, 2)
 
             # --- Date & Time ---
             Label:

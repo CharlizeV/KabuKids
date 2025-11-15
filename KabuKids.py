@@ -8,83 +8,58 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.metrics import dp
 from kivy.graphics import Color, RoundedRectangle
-from kivy.properties import StringProperty, ListProperty, ObjectProperty
-from kivy.uix.image import AsyncImage  # or use Image if local paths
-from kivy.clock import Clock
-
+from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
+from colors import SECONDARY_COLOR, DARK_COLOR
+from kivy.clock import Clock
+import threading
+import os
+import certifi
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 
-# Sample Reports Database (replace with real DB later)
-SAMPLE_REPORTS = {
-    "R001": {
-        "report_id": "R001",
-        "user_id": "U123",
-        "user_name": "Liam Chen",
-        "user_age": 4,
-        "date": "October 20, 2025",
-        "start_time": "12:30 PM",
-        "end_time": "1:15 PM",
-        "transcript": "Child said: 'I like green trees!' while eating broccoli. Refused chicken again.",
-        "conversation_suggestions": [
-            "What color was your favorite food today?",
-            "Can you show me how you used your spoon?"
-        ],
-        "ingredient_suggestions": [
-            "Broccoli - Rich in vitamins A, C, and K; supports eye and immune health.",
-            "Sweet Potato - Soft, sweet, and high in beta-carotene."
-        ],
-        "food_before_meal": ["Broccoli", "Grilled Chicken", "Brown Rice", "Sweet Potato"],
-        "food_not_finished": ["Grilled Chicken"],
-        "portion_before_image": "assets/portion_before_1.jpg",
-        "portion_after_image": "assets/portion_after_1.jpg"
-    },
-    "R002": {
-        "report_id": "R002",
-        "user_id": "U123",
-        "user_name": "Liam Chen",
-        "user_age": 4,
-        "date": "October 18, 2025",
-        "start_time": "7:00 AM",
-        "end_time": "7:45 AM",
-        "transcript": "Child poured milk himself! Said 'I big boy now!'",
-        "conversation_suggestions": [
-            "What did you do all by yourself this morning?",
-            "What food gave you energy to play today?"
-        ],
-        "ingredient_suggestions": [
-            "Oatmeal - Great source of fiber and sustained energy.",
-            "Banana - Easy to eat, rich in potassium."
-        ],
-        "food_before_meal": ["Oatmeal", "Banana Slices", "Milk", "Toast"],
-        "food_not_finished": ["Toast"],
-        "portion_before_image": "assets/portion_before_2.jpg",
-        "portion_after_image": "assets/portion_after_2.jpg"
-    },
-    "R003": {
-        "report_id": "R003",
-        "user_id": "U123",
-        "user_name": "Liam Chen",
-        "user_age": 4,
-        "date": "October 15, 2025",
-        "start_time": "6:15 PM",
-        "end_time": "7:00 PM",
-        "transcript": "Child shared food with doll: 'You eat too, dolly!'",
-        "conversation_suggestions": [
-            "Who did you share your food with today?",
-            "What made dinner fun tonight?"
-        ],
-        "ingredient_suggestions": [
-            "Carrots - Crunchy and great for vision.",
-            "Cheese Cubes - Good source of calcium and protein."
-        ],
-        "food_before_meal": ["Carrot Sticks", "Cheese Cubes", "Apple Slices", "Yogurt"],
-        "food_not_finished": [],
-        "portion_before_image": "assets/portion_before_3.jpg",
-        "portion_after_image": "assets/portion_after_3.jpg"
-    }
-}
+# ====== MongoDB Setup ======
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
+client = MongoClient(
+    MONGODB_URI,
+    server_api=ServerApi("1"),
+    tls=True,
+    tlsCAFile=certifi.where(),
+    serverSelectionTimeoutMS=5000,
+)
+db = client["kabu_db_user"]
+meals_col = db["Meals"]
+
+# Global variable to hold fetched reports (will be filled after async load)
+SAMPLE_REPORTS = {}
+
+def fetch_reports_from_db(callback):
+    """Fetch all meal reports from MongoDB (run in background thread)."""
+    try:
+        cursor = meals_col.find({})
+        reports = {doc["_id"]: doc for doc in cursor}
+        callback(reports)
+    except Exception as e:
+        print("❌ Error fetching from MongoDB:", e)
+        callback({})
+
+# Helper to create rounded background (unchanged)
+def add_rounded_background(widget, radius=8):
+    with widget.canvas.before:
+        Color(0.95, 0.95, 0.95, 1)
+        widget.rect = RoundedRectangle(
+            pos=widget.pos,
+            size=widget.size,
+            radius=[dp(radius)]
+        )
+    widget.bind(pos=lambda obj, pos: setattr(widget.rect, 'pos', pos))
+    widget.bind(size=lambda obj, size: setattr(widget.rect, 'size', size))
+
+
+
+
 
 # Helper function to create a rounded rectangle background
 def add_rounded_background(widget, radius=8):
@@ -99,8 +74,8 @@ def add_rounded_background(widget, radius=8):
     widget.bind(size=lambda obj, size: setattr(widget.rect, 'size', size))
 
 class MealItem(BoxLayout):
-    def __init__(self, report_id, date, start_time, end_time, **kwargs):
-        self.report_id = report_id  # ← Store report ID
+    def __init__(self, meal_id, date, start_time, end_time, **kwargs):
+        self.meal_id = meal_id  # ← Store report ID
         super().__init__(**kwargs)
         self.orientation = 'horizontal'
         self.size_hint_y = None
@@ -154,7 +129,7 @@ class MealItem(BoxLayout):
 
     def go_to_report(self, instance):
         app = App.get_running_app()
-        app.selected_report_id = self.report_id  # ← Save which report was clicked
+        app.selected_meal_id = self.meal_id  # ← Save which report was clicked
         app.root.current = "report"
 
 # Define all screen classes
@@ -168,14 +143,38 @@ class MakeAccountPage(Screen):
     pass
 
 class DashboardPage(Screen):
-    def on_enter(self, *args):
-        # Clear previous items (in case screen is revisited)
-        self.ids.meals_list.clear_widgets()
+    _reports_loaded = False
 
-        # Use real reports from SAMPLE_REPORTS
-        for report_id, report in SAMPLE_REPORTS.items():
+    def on_enter(self, *args):
+        if not self._reports_loaded:
+            self.ids.meals_list.clear_widgets()
+            # self.ids.loading_label.text = "Loading reports..."  # ← REMOVED
+            self.load_reports_from_db()
+        else:
+            self._populate_list()
+
+    def load_reports_from_db(self):
+        def on_reports_fetched(reports):
+            global SAMPLE_REPORTS
+            SAMPLE_REPORTS = reports
+            self._reports_loaded = True
+            Clock.schedule_once(lambda dt: self._populate_list(), 0)
+
+        thread = threading.Thread(target=fetch_reports_from_db, args=(on_reports_fetched,))
+        thread.daemon = True
+        thread.start()
+
+    def _populate_list(self):
+        self.ids.meals_list.clear_widgets()
+        # self.ids.loading_label.text = ""  # ← REMOVED
+
+        if not SAMPLE_REPORTS:
+            self.ids.meals_list.add_widget(Label(text="No reports found.", size_hint_y=None, height=dp(40)))
+            return
+
+        for meal_id, report in SAMPLE_REPORTS.items():
             item = MealItem(
-                report_id=report_id,
+                meal_id=meal_id,
                 date=report["date"],
                 start_time=report["start_time"],
                 end_time=report["end_time"]
@@ -278,8 +277,6 @@ class ProfilePage(Screen):
         container.height = container.minimum_height
 
 class ReportPage(Screen):
-    user_name = StringProperty("")
-    user_age = StringProperty("")
     date = StringProperty("")
     time_range = StringProperty("")
     summary_text = StringProperty("")
@@ -292,33 +289,22 @@ class ReportPage(Screen):
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
-        report_id = app.selected_report_id
+        meal_id = app.selected_meal_id
 
-        if not report_id or report_id not in SAMPLE_REPORTS:
+        if not meal_id or meal_id not in SAMPLE_REPORTS:
             # Fallback or error handling
-            self.user_name = "Unknown"
-            self.user_age = ""
             self.date = "N/A"
             self.summary_text = "Report not found."
             return
 
-        data = SAMPLE_REPORTS[report_id]
-
-        # User info
-        self.user_name = data["user_name"]
-        self.user_age = f"{data['user_age']} years old"
+        data = SAMPLE_REPORTS[meal_id]
 
         # Date & time
         self.date = data["date"]
         self.time_range = f"{data['start_time']} – {data['end_time']}"
 
         # Summary
-        self.summary_text = (
-            f"During the meal, the child showed interest in vegetables but refused protein sources. "
-            f"They engaged positively with caregivers and used utensils independently. "
-            f"Foods offered: {', '.join(data['food_before_meal'])}. "
-            f"Foods not finished: {', '.join(data['food_not_finished']) if data['food_not_finished'] else 'None'}."
-        )
+        self.summary_text = data.get("summary", "No summary available.")
 
         # Food lists (with real newlines)
         self.food_before_text = "\n".join([f"• {food}" for food in data["food_before_meal"]])
@@ -333,188 +319,147 @@ class ReportPage(Screen):
         self.formatted_conversation_suggestions = "\n".join([f'• "{s}"' for s in data["conversation_suggestions"]])
 
 class TranscriptPage(Screen):
-    def open_like_popup(self):
-        content = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(15))
+    def on_pre_enter(self, *args):
+        content = self.ids.transcript_content
+        content.clear_widgets()
 
-        # Title - properly aligned
-        title = Label(
-            text="What do you like about this response?",
-            font_size='16sp',
-            halign='left',
-            valign='middle',
-            size_hint_y=None,
-            height=dp(40),
-            text_size=(content.width - dp(40), None)  # Account for padding
-        )
-        content.add_widget(title)
+        app = App.get_running_app()
+        meal_id = getattr(app, 'selected_meal_id', None)
 
-        # Options: Checkbox + Text properly aligned
-        options = [
-            "Promotes healthy eating",
-            "Effective",
-            "Encourage positive communication",
-            "Other"
-        ]
-
-        for opt in options:
-            row = BoxLayout(
-                size_hint_y=None, 
-                height=dp(30), 
-                spacing=dp(10),
-                padding=[0, 0, 0, 0]
+        if not meal_id or meal_id not in SAMPLE_REPORTS:
+            error = Label(
+                text="Transcript not found.",
+                color=DARK_COLOR,
+                font_size='16sp',
+                halign='left',
+                valign='top',
+                size_hint_x=1,
+                size_hint_y=None,
+                height=dp(40)
             )
-            cb = CheckBox(
-                size_hint_x=None, 
-                width=dp(30),
+            error.bind(
+                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
+                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
+            )
+            content.add_widget(error)
+            return
+
+        report = SAMPLE_REPORTS[meal_id]
+        for msg in report["transcript"]:
+            role = msg["role"]
+            text = msg["text"]
+            emotion = msg.get("emotion", "neutral")
+
+            # Message container
+            msg_box = BoxLayout(
+                orientation='vertical',
+                size_hint_y=None,
+                size_hint_x=1,
+                height=dp(10),
+                padding=[0, 0, 0, dp(10)]
+            )
+
+            # Speaker label
+            speaker_label = Label(
+                text="Kabu:" if role == "Kabu" else "Name:",
+                font_size='16sp',
+                bold=True,
+                color=SECONDARY_COLOR,
+                halign='left',
+                valign='top',
+                size_hint_x=1,
+                size_hint_y=None,
+                height=dp(20)
+            )
+            speaker_label.bind(
+                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
+                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
+            )
+
+            # Emotion label
+            emotion_label = Label(
+                text=f"[{emotion}]",
+                font_size='12sp',
+                color=(0.4, 0.4, 0.4, 1),
+                halign='left',
+                valign='top',
+                size_hint_x=1,
+                size_hint_y=None,
+                height=dp(16)
+            )
+            emotion_label.bind(
+                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
+                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
+            )
+
+            # Message text
+            msg_label = Label(
+                text=text,
+                font_size='16sp',
+                color=DARK_COLOR,
+                halign='left',
+                valign='top',
+                size_hint_x=1,
                 size_hint_y=None,
                 height=dp(30)
             )
-            lbl = Label(
-                text=opt,
-                font_size='14sp',
-                halign='left',
-                valign='middle',
-                size_hint_x=1,
-                size_hint_y=None,
-                height=dp(30),
-                text_size=(None, None)  # Allow text to determine size
+            msg_label.bind(
+                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
+                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
             )
-            row.add_widget(cb)
-            row.add_widget(lbl)
-            content.add_widget(row)
 
-        # Other input field
-        other_input = TextInput(
-            hint_text="Specify other...",
-            font_size='14sp',
-            size_hint_y=None,
-            height=dp(40),
-            multiline=False,
-            background_color=[1, 1, 1, 1],
-            foreground_color=[0, 0, 0, 1]
-        )
-        content.add_widget(other_input)
+            msg_box.add_widget(speaker_label)
+            msg_box.add_widget(emotion_label)
+            msg_box.add_widget(msg_label)
 
-        # Submit button
-        submit_btn = Button(
-            text="Submit",
-            size_hint_y=None,
-            height=dp(45),
-            background_color=[0.7, 0.7, 0.7, 1],
-            color=[0, 0, 0, 1],
-            on_press=lambda x: self.close_popup(popup)
-        )
-        content.add_widget(submit_btn)
+            # Dislike button for Kabu only
+            if role == "Kabu":
+                btn_row = BoxLayout(size_hint_y=None, size_hint_x=1, height=dp(30))
+                dislike_btn = Button(
+                    size_hint_x=None,
+                    width=dp(30),
+                    background_normal='',
+                    background_color=(1, 0, 0, 1),
+                    on_press=self.open_dislike_popup
+                )
+                btn_row.add_widget(dislike_btn)
+                btn_row.add_widget(BoxLayout())  # spacer
+                msg_box.add_widget(btn_row)
 
-        popup = Popup(
-            title='',
-            content=content,
-            size_hint=(0.8, 0.6),
-            auto_dismiss=True,
-            background_color=[0, 0, 0, 1]
-        )
-        
-        # Bind after popup creation to get proper sizing
-        def on_open(instance):
-            title.text_size = (content.width - dp(40), None)
-            for child in content.children:
-                if isinstance(child, BoxLayout) and len(child.children) == 2:
-                    lbl = child.children[0]  # Label is first due to reverse order
-                    if isinstance(lbl, Label):
-                        lbl.text_size = (child.width - dp(40), None)
-        
-        popup.bind(on_open=on_open)
-        popup.bind(on_dismiss=lambda x: setattr(self, 'popup', None))
-        popup.open()
-        self.popup = popup
+            # Auto height
+            msg_box.bind(minimum_height=msg_box.setter('height'))
+            content.add_widget(msg_box)
 
-    def open_dislike_popup(self):
+    def open_dislike_popup(self, instance):
         content = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(15))
 
         title = Label(
             text="What do you dislike about this response?",
             font_size='16sp',
             halign='left',
-            valign='middle',
             size_hint_y=None,
-            height=dp(40),
-            text_size=(content.width - dp(40), None)
+            height=dp(40)
         )
+        title.bind(width=lambda w, width: setattr(title, 'text_size', (width - dp(40), None)))
         content.add_widget(title)
 
-        options = [
-            "Ineffective",
-            "Distracting",
-            "Doesn't relate to interest",
-            "Other"
-        ]
-
+        options = ["Ineffective", "Distracting", "Doesn't relate to interest", "Other"]
         for opt in options:
-            row = BoxLayout(
-                size_hint_y=None, 
-                height=dp(30), 
-                spacing=dp(10),
-                padding=[0, 0, 0, 0]
-            )
-            cb = CheckBox(
-                size_hint_x=None, 
-                width=dp(30),
-                size_hint_y=None,
-                height=dp(30)
-            )
-            lbl = Label(
-                text=opt,
-                font_size='14sp',
-                halign='left',
-                valign='middle',
-                size_hint_x=1,
-                size_hint_y=None,
-                height=dp(30),
-                text_size=(None, None)
-            )
+            row = BoxLayout(size_hint_y=None, height=dp(30), spacing=dp(10))
+            cb = CheckBox(size_hint_x=None, width=dp(30), height=dp(30))
+            lbl = Label(text=opt, font_size='14sp', halign='left', size_hint_x=1, height=dp(30))
+            lbl.bind(width=lambda w, width: setattr(lbl, 'text_size', (width - dp(40), None)))
             row.add_widget(cb)
             row.add_widget(lbl)
             content.add_widget(row)
 
-        other_input = TextInput(
-            hint_text="Specify other...",
-            font_size='14sp',
-            size_hint_y=None,
-            height=dp(40),
-            multiline=False,
-            background_color=[1, 1, 1, 1],
-            foreground_color=[0, 0, 0, 1]
-        )
-        content.add_widget(other_input)
+        other = TextInput(hint_text="Specify other...", size_hint_y=None, height=dp(40))
+        content.add_widget(other)
 
-        submit_btn = Button(
-            text="Submit",
-            size_hint_y=None,
-            height=dp(45),
-            background_color=[0.7, 0.7, 0.7, 1],
-            color=[0, 0, 0, 1],
-            on_press=lambda x: self.close_popup(popup)
-        )
-        content.add_widget(submit_btn)
+        submit = Button(text="Submit", size_hint_y=None, height=dp(45), on_press=lambda x: self.close_popup(popup))
+        content.add_widget(submit)
 
-        popup = Popup(
-            title='',
-            content=content,
-            size_hint=(0.8, 0.6),
-            auto_dismiss=True,
-            background_color=[0, 0, 0, 1]
-        )
-        
-        def on_open(instance):
-            title.text_size = (content.width - dp(40), None)
-            for child in content.children:
-                if isinstance(child, BoxLayout) and len(child.children) == 2:
-                    lbl = child.children[0]
-                    if isinstance(lbl, Label):
-                        lbl.text_size = (child.width - dp(40), None)
-        
-        popup.bind(on_open=on_open)
-        popup.bind(on_dismiss=lambda x: setattr(self, 'popup', None))
+        popup = Popup(title='', content=content, size_hint=(0.8, 0.6))
         popup.open()
         self.popup = popup
 
@@ -741,7 +686,7 @@ kv = Builder.load_file("KabuKids.kv")
 
 class MultiScreenApp(App):
     def build(self):
-        self.selected_report_id = None  # ← Add this
+        self.selected_meal_id = None
         return kv
     
 if __name__ == '__main__':

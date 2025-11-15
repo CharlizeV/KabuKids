@@ -1,0 +1,170 @@
+{
+  "R001": {
+    "meal_id": "R001",
+    "user_id": "U123",
+    "date": "October 20, 2025",
+    "start_time": "12:30 PM",
+    "end_time": "1:15 PM",
+    "transcript": [
+      {
+        "role": "Child",
+        "timestamp": "12:32 PM",
+        "text": "I like green trees!",
+        "emotion": "happy"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "12:33 PM",
+        "text": "You haven't touched the broccoli yet. Just give it one bite—then we can talk about Naruto Kaizen.",
+        "emotion": "neutral"
+      },
+      {
+        "role": "Child",
+        "timestamp": "12:34 PM",
+        "text": "But it looks weird... like a cursed spirit or something.",
+        "emotion": "disgust"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "12:35 PM",
+        "text": "Exactly! Defeat it like Yugi would. Just one bite and it's gone.",
+        "emotion": "excited"
+      },
+      {
+        "role": "Child",
+        "timestamp": "12:36 PM",
+        "text": "Okay, hmm. It's not that bad.",
+        "emotion": "neutral"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "12:37 PM",
+        "text": "See? Power unlocked. Now you're leveling up.",
+        "emotion": "happy"
+      },
+      {
+        "role": "Child",
+        "timestamp": "12:38 PM",
+        "text": "If I eat the carrots too, do I get a special move?",
+        "emotion": "surprise"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "12:39 PM",
+        "text": "Yep. Max power-up. And then we can play Mario Kart after dinner.",
+        "emotion": "happy"
+      },
+      {
+        "role": "Child",
+        "timestamp": "12:40 PM",
+        "text": "Deal. But only if I get Yoshi.",
+        "emotion": "happy"
+      }
+    ],
+    "summary": "Liam engaged positively with broccoli after playful encouragement from Kabu, using imaginative analogies (e.g., 'cursed spirit', 'power-up'). He refused grilled chicken but showed openness to trying vegetables when framed as a game. Conversation centered on autonomy, play, and shared rewards.",
+    "conversation_suggestions": [
+      "What color was your favorite food today?",
+      "Can you show me how you used your spoon?"
+    ],
+    "ingredient_suggestions": [
+      "Broccoli - Rich in vitamins A, C, and K; supports eye and immune health.",
+      "Sweet Potato - Soft, sweet, and high in beta-carotene."
+    ],
+    "food_before_meal": ["Broccoli", "Grilled Chicken", "Brown Rice", "Sweet Potato"],
+    "food_not_finished": ["Grilled Chicken"],
+    "portion_before_image": "assets/portion_before_1.jpg",
+    "portion_after_image": "assets/portion_after_1.jpg"
+  },
+  "R002": {
+    "meal_id": "R002",
+    "user_id": "U123",
+    "date": "October 18, 2025",
+    "start_time": "7:00 AM",
+    "end_time": "7:45 AM",
+    "transcript": [
+      {
+        "role": "Child",
+        "timestamp": "7:05 AM",
+        "text": "I big boy now!",
+        "emotion": "happy"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "7:06 AM",
+        "text": "Wow! You poured the milk all by yourself? That’s amazing!",
+        "emotion": "excited"
+      },
+      {
+        "role": "Child",
+        "timestamp": "7:07 AM",
+        "text": "Yes! I do it every day!",
+        "emotion": "proud"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "7:08 AM",
+        "text": "You’re getting so strong and independent. What else can you do all by yourself?",
+        "emotion": "happy"
+      }
+    ],
+    "summary": "Liam demonstrated growing independence by pouring his own milk and proudly declaring, 'I big boy now!' Kabu reinforced his autonomy with praise and open-ended questions. The interaction highlighted self-help skills and confidence development during breakfast.",
+    "conversation_suggestions": [
+      "What did you do all by yourself this morning?",
+      "What food gave you energy to play today?"
+    ],
+    "ingredient_suggestions": [
+      "Oatmeal - Great source of fiber and sustained energy.",
+      "Banana - Easy to eat, rich in potassium."
+    ],
+    "food_before_meal": ["Oatmeal", "Banana Slices", "Milk", "Toast"],
+    "food_not_finished": ["Toast"],
+    "portion_before_image": "assets/portion_before_2.jpg",
+    "portion_after_image": "assets/portion_after_2.jpg"
+  },
+  "R003": {
+    "meal_id": "R003",
+    "user_id": "U123",
+    "date": "October 15, 2025",
+    "start_time": "6:15 PM",
+    "end_time": "7:00 PM",
+    "transcript": [
+      {
+        "role": "Child",
+        "timestamp": "6:20 PM",
+        "text": "You eat too, dolly!",
+        "emotion": "happy"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "6:21 PM",
+        "text": "Aww, that’s so kind of you to share with your doll!",
+        "emotion": "happy"
+      },
+      {
+        "role": "Child",
+        "timestamp": "6:22 PM",
+        "text": "Dolly hungry. Carrot for dolly?",
+        "emotion": "neutral"
+      },
+      {
+        "role": "Kabu",
+        "timestamp": "6:23 PM",
+        "text": "Yes, sharing is caring! Maybe dolly will try the cheese next.",
+        "emotion": "neutral"
+      }
+    ],
+    "summary": "Liam exhibited prosocial behavior by sharing food with his doll, saying, 'You eat too, dolly!' This demonstrated empathy and social imagination. Kabu validated his kindness and gently encouraged continued exploration of foods through pretend play. All foods were finished, indicating a positive mealtime experience.",
+    "conversation_suggestions": [
+      "Who did you share your food with today?",
+      "What made dinner fun tonight?"
+    ],
+    "ingredient_suggestions": [
+      "Carrots - Crunchy and great for vision.",
+      "Cheese Cubes - Good source of calcium and protein."
+    ],
+    "food_before_meal": ["Carrot Sticks", "Cheese Cubes", "Apple Slices", "Yogurt"],
+    "food_not_finished": [],
+    "portion_before_image": "assets/portion_before_3.jpg",
+    "portion_after_image": "assets/portion_after_3.jpg"
+  }
+}
