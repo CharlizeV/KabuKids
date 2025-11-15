@@ -56,15 +56,20 @@
                             size_hint: None, None
                             size: 80, 80
                             pos_hint: {'center_y': 0.5}
-                            canvas:
+
+                            canvas.before:
+                                Color:
+                                    rgba: 1,1,1,1
                                 Ellipse:
                                     pos: self.pos
                                     size: self.size
+
                             Image:
                                 id: profile_image
                                 source: ''
-                                size: 80, 80
-                                pos: self.pos
+                                size_hint: None, None
+                                size: self.parent.size
+                                pos: self.parent.pos
                                 allow_stretch: True
                                 keep_ratio: False
                         Button:
@@ -90,6 +95,29 @@
                             text_size: self.width, None
                         TextInput:
                             id: name_input
+                            hint_text: "Enter your name"
+                            multiline: False
+                            size_hint_y: None
+                            height: 40
+                            background_color: 0.95, 0.95, 0.95, 1
+                            padding: [10, 10]
+
+                    # USERNAME
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: 60
+                        spacing: 5
+                        Label:
+                            text: "USERNAME"
+                            size_hint_y: None
+                            height: 20
+                            color: 0, 0, 0, 1
+                            font_size: 14
+                            halign: 'left'
+                            text_size: self.width, None
+                        TextInput:
+                            id: username_input
                             hint_text: "Enter your name"
                             multiline: False
                             size_hint_y: None
@@ -239,7 +267,7 @@
                             color: 0, 0, 0, 1
                             on_press: root.add_tag_prompt("goals")
 
-                    # Password (optional)
+                    # Password 
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -254,6 +282,7 @@
                             halign: 'left'
                             text_size: self.width, None
                         TextInput:
+                            id: password_input
                             multiline: False
                             size_hint_y: None
                             height: 40

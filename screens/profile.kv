@@ -64,7 +64,8 @@
             height: 180
             spacing: 10
 
-            Widget:
+            # Profile picture (clipped circle)
+            StencilView:
                 size_hint: None, None
                 size: 120, 120
                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
@@ -75,20 +76,29 @@
                         pos: self.pos
                         size: self.size
 
+                Image:
+                    id: profile_image
+                    source: root.profile_image_source
+                    size_hint: None, None
+                    size: self.parent.size
+                    pos: self.parent.pos
+                    allow_stretch: True
+                    keep_ratio: False
+
             Label:
-                text: "Charlize Villaflores"
+                text: root.display_name
                 halign: 'center'
                 font_size: 30
                 color: 0, 0, 0, 1
                 size_hint_y: None
-                height: 40 
-            
+                height: 40
+
         ScrollView:
             GridLayout:
-                cols: 1                             # ← MUST specify cols or rows
-                size_hint_y: None 
-                height: self.minimum_height  
-                padding: [40, 20, 40, 20]            # [left, top, right, bottom]
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
+                padding: [40, 20, 40, 20]
                 canvas.before:
                     Color:
                         rgba: 0.9, 0.9, 0.9, 1
@@ -100,7 +110,7 @@
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: self.minimum_height   
+                    height: self.minimum_height
                     spacing: 10
 
                     Label:
@@ -115,7 +125,7 @@
                         height: 30
 
                     Label:
-                        text: "charlize_v"
+                        text: root.username_text
                         halign: 'right'
                         valign: 'middle'
                         text_size: self.size
@@ -123,7 +133,7 @@
                         color: 0, 0, 0, 1
                         size_hint_y: None
                         height: 30
-                    
+
                     Label:
                         text: "Birthday"
                         bold: True
@@ -136,7 +146,7 @@
                         height: 30
 
                     Label:
-                        text: "June 14, 2004"
+                        text: root.birthday_text
                         halign: 'right'
                         valign: 'middle'
                         text_size: self.size
@@ -144,7 +154,7 @@
                         color: 0, 0, 0, 1
                         size_hint_y: None
                         height: 30
-                    
+
                     Label:
                         text: "Gender"
                         bold: True
@@ -157,7 +167,7 @@
                         height: 30
 
                     Label:
-                        text: "Female"
+                        text: root.gender_text
                         halign: 'right'
                         valign: 'middle'
                         text_size: self.size
@@ -166,199 +176,104 @@
                         size_hint_y: None
                         height: 30
 
-                #-- Likes of the user ---  
-
+                # Likes header and dynamic container
                 Label:
-                    text: " "
-                    bold: True
-                    text_size: self.size
-                    halign: 'left'
-                    font_size: 1
-                    color: 0, 0, 0, 1
+                    text: ""
                     size_hint_y: None
-                    height: 30
+                    height: 10
 
                 Label:
                     text: "My Likes"
                     bold: True
-                    text_size: self.size
-                    halign: 'left'
                     font_size: 25
-                    color: 0, 0, 0, 1
                     size_hint_y: None
                     height: 40
-                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
-                    
-                GridLayout:
-                    cols: 1
+                    color: 0.2, 0.2, 0.2, 1
+                
+                Label:
+                    text: ""
                     size_hint_y: None
-                    height: self.minimum_height  
-                    padding: [20, 20, 20, 20]
-                    spacing: 8
+                    height: 10
+
+                BoxLayout:
+                    id: likes_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [20, 10]
+                    spacing: 6
                     canvas.before:
                         Color:
-                            rgba: 0.5, 0.9, 0.5, 1 
+                            rgba: 0.2, 0.2, 0.2, 1    # dark gray
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
-                            radius: [dp(20), dp(20), dp(20), dp(20)]
+                            radius: [dp(8), dp(8), dp(8), dp(8)]
 
-                    Label:
-                        text: "• Painting"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Reading"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Traveling"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                
-                
-                
-                #-- Dislikes of the user ---  
-
+                # Dislikes
                 Label:
-                    text: " "
-                    bold: True
-                    text_size: self.size
-                    halign: 'left'
-                    font_size: 1
-                    color: 0, 0, 0, 1
+                    text: ""
                     size_hint_y: None
-                    height: 30
+                    height: 10
 
                 Label:
                     text: "My Dislikes"
                     bold: True
-                    text_size: self.size
-                    halign: 'left'
                     font_size: 25
-                    color: 0, 0, 0, 1
                     size_hint_y: None
                     height: 40
-                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
-                    
-                GridLayout:
-                    cols: 1
+                    color: 0.2, 0.2, 0.2, 1
+                
+                Label:
+                    text: ""
                     size_hint_y: None
-                    height: self.minimum_height  
-                    padding: [20, 20, 20, 20]
-                    spacing: 8
+                    height: 10
+
+                BoxLayout:
+                    id: dislikes_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [20, 10]
+                    spacing: 6
                     canvas.before:
                         Color:
-                            rgba: 0.5, 0.9, 0.5, 1 
+                            rgba: 0.2, 0.2, 0.2, 1
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
-                            radius: [dp(20), dp(20), dp(20), dp(20)]
+                            radius: [dp(8), dp(8), dp(8), dp(8)]
 
-                    Label:
-                        text: "• insects"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Horror"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Jumpscares"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-
-                #-- Goals of the user ---  
-
+                # Goals
                 Label:
-                    text: " "
-                    bold: True
-                    text_size: self.size
-                    halign: 'left'
-                    font_size: 1
-                    color: 0, 0, 0, 1
+                    text: ""
                     size_hint_y: None
-                    height: 30
+                    height: 10
 
                 Label:
                     text: "My Goals"
                     bold: True
-                    text_size: self.size
-                    halign: 'left'
                     font_size: 25
-                    color: 0, 0, 0, 1
                     size_hint_y: None
                     height: 40
-                    padding: [0, 30, 0, 10] # [left, top, right, bottom]
-                    
-                GridLayout:
-                    cols: 1
+                    color: 0.2, 0.2, 0.2, 1
+
+                Label:
+                    text: ""
                     size_hint_y: None
-                    height: self.minimum_height  
-                    padding: [20, 20, 20, 20]
-                    spacing: 8
+                    height: 10
+
+                BoxLayout:
+                    id: goals_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: [20, 10]
+                    spacing: 6
                     canvas.before:
                         Color:
-                            rgba: 0.5, 0.9, 0.5, 1 
+                            rgba: 0.2, 0.2, 0.2, 1
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
-                            radius: [dp(20), dp(20), dp(20), dp(20)]
-
-                    Label:
-                        text: "• Eat faster"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Eat even faster"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
-                    Label:
-                        text: "• Fly"
-                        halign: 'left'
-                        valign: 'top'
-                        text_size: self.size
-                        color: 0, 0, 0, 1
-                        font_size: 18
-                        size_hint_y: None
-                        height: self.texture_size[1]  # ← Sizes to text height
+                            radius: [dp(8), dp(8), dp(8), dp(8)]

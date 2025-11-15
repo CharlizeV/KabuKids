@@ -57,9 +57,9 @@
                     valign: "middle"
                     text_size: self.size
 
-            # Name field
+            # Username field
             Label:
-                text: "Name"
+                text: "Username"
                 color: dark_color
                 halign: "left"
                 valign: "middle"
@@ -68,6 +68,7 @@
                 height: 30
 
             TextInput:
+                id: username_input
                 multiline: False
                 background_color: 1, 1, 1, 1  # white background
                 foreground_color: dark_color
@@ -86,6 +87,7 @@
                 height: 30
 
             TextInput:
+                id: password_input
                 multiline: False
                 password: True
                 background_color: 1, 1, 1, 1
@@ -102,7 +104,7 @@
                 color: primary_color  # text color
                 size_hint_y: None
                 height: 50
-                on_press: app.root.current = "dashboard"
+                on_press: root.login()
 
             # Create account button
             Button:

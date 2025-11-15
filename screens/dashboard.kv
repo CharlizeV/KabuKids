@@ -16,33 +16,18 @@
                 orientation: 'horizontal'
                 spacing: dp(10)
                 
-                # Profile picture placeholder (circle)
-                Image:
-                    source: ''  # Placeholder - replace with actual image path
-                    size_hint: None, None
-                    size: dp(40), dp(40)
-                    canvas.before:
-                        Color:
-                            rgba: 0.8, 0.8, 0.8, 1  # Light gray background
-                        Ellipse:
-                            pos: self.pos
-                            size: self.size
-                    # Note: For actual circular image, you'd need a custom widget or use AsyncImage with mask
+                Label:
+                    text: ""  
+                    font_size: dp(40)
+                    size_hint_x: None
+                    width: dp(40)
                 
                 # Name and age
                 BoxLayout:
                     orientation: 'vertical'
                     Label:
-                        text: "User Name"
+                        text: root.user_name
                         font_size: sp(16)
-                        halign: 'left'
-                        valign: 'middle'
-                        size_hint_y: None
-                        height: self.texture_size[1]
-                    Label:
-                        text: "25 years old"
-                        font_size: sp(12)
-                        color: 0.5, 0.5, 0.5, 1
                         halign: 'left'
                         valign: 'middle'
                         size_hint_y: None
