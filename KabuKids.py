@@ -247,13 +247,21 @@ class MakeAccountPage(Screen):
     def get_tags_from_container(self, container_id):
         container = self.ids[container_id]
         tags = []
-        # container.children is LIFO (last added first). Find the Label inside each tag BoxLayout.
+        # container.children is LIFO (last added first). Each tag is a BoxLayout containing a Label and a Button.
         for child in container.children:
-            if isinstance(child, BoxLayout):
-                label_widget = next((w for w in child.children if isinstance(w, Label)), None)
-                if label_widget:
-                    tags.append(label_widget.text)
-        tags.reverse()  # optional: reverse to match visual order (first-added first)
+            if not isinstance(child, BoxLayout):
+                continue
+            found = None
+            for w in child.children:
+                if hasattr(w, 'text') and w.text and w.text != "×":
+                    found = w
+                    break
+            if found:
+                tags.append(found.text)
+            else:
+                # debug help if something unexpected appears
+                print("Warning: no text widget found in tag child:", [type(w) for w in child.children])
+        tags.reverse()  # return in visual (first-added) order
         return tags
 
     def show_message(self, message):
