@@ -84,34 +84,6 @@
                             pos: self.pos
                             size: self.size
 
-                    # Example ingredient (optional)
-                    BoxLayout:
-                        size_hint_y: None
-                        height: 32
-                        spacing: 6
-                        canvas.before:
-                            Color:
-                                rgba: 0.85, 0.85, 0.85, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        Label:
-                            text: "chicken"
-                            font_size: '15sp'
-                            color: 0, 0, 0, 1
-                            halign: 'left'
-                            valign: 'center'
-                            text_size: self.size
-                        Button:
-                            text: "×"
-                            size_hint_x: None
-                            width: 26
-                            background_normal: ''
-                            background_color: 1, 0.4, 0.4, 1
-                            color: 1, 1, 1, 1
-                            font_size: '17sp'
-                            on_press: root.remove_ingredient(self.parent)
-
                     # Add Ingredient Button
                     Button:
                         size_hint_y: None

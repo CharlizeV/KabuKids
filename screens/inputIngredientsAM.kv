@@ -21,24 +21,12 @@
             padding: [10, 10, 10, 10]
 
             Label:
-                text: ""
-
-            Label:
                 text: "Input Food After Meal"
                 font_size: 20
                 color: 0, 0, 0, 1
                 halign: 'center'
                 valign: 'middle'
                 text_size: self.size
-
-            Button:
-                size_hint_x: None
-                width: 40
-                text: "→"
-                background_color: 0, 0, 0, 0
-                color: 0.8, 0.3, 0.3, 1
-                font_size: 20
-                on_release: app.root.current = "portionSizeAfter"
 
         # --- Instruction Label ---
         Label:
@@ -61,3 +49,13 @@
                 spacing: 8
                 size_hint_y: None
                 height: self.minimum_height
+
+        # --- FINISH BUTTON (saves the meal to DB) ---
+        Button:
+            text: "Finish Meal"
+            size_hint_y: None
+            height: dp(56)
+            background_normal: ''
+            background_color: 0.2, 0.6, 1, 1
+            color: 1, 1, 1, 1
+            on_press: root.finish_meal()
