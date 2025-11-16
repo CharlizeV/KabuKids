@@ -40,6 +40,8 @@ try:
 except ImportError:
     pass
 
+import stt, llm, tts, mongodb, fer, utils
+
 # ====== MongoDB Setup ======
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
 client = MongoClient(
