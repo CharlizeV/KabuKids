@@ -1,0 +1,70 @@
+# Core ML / infra (install torch separately for matching CUDA if needed)
+transformers>=4.35.2
+accelerate>=0.20.3
+# Install torch separately for GPU/CPU specifics (see PyTorch site)
+torch>=2.0.0
+bitsandbytes>=0.41.0
+
+# ASR / audio / vision
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24
+opencv-python>=4.7.0
+Pillow>=9.5.0
+webrtcvad>=2.0.10
+
+# Optional small audio player (requires MSVC to build on Windows)
+# simpleaudio>=1.0.4
+
+# Vector DB / utilities
+faiss-cpu>=1.7.3
+
+# Cloud / API / LLM clients
+openai>=0.27.0
+ollama>=0.1.0
+huggingface-hub>=0.18.0
+kokoro>=0.1.0
+
+# Database / networking
+pymongo>=4.3
+dnspython>=2.3.0
+certifi>=2023.5.7
+
+# Dev / convenience
+python-dotenv>=1.0.0
+ipython>=8.0.0
+# Core ML / infra (install torch separately for matching CUDA if needed)
+transformers>=4.35.2
+accelerate>=0.20.3
+# Install torch separately for GPU/CPU specifics (see PyTorch site)
+torch>=2.0.0
+bitsandbytes>=0.41.0
+
+# ASR / audio / vision
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24
+opencv-python>=4.7.0
+Pillow>=9.5.0
+webrtcvad>=2.0.10
+
+# Optional small audio player (requires MSVC to build on Windows)
+# simpleaudio>=1.0.4
+
+# Vector DB / utilities
+faiss-cpu>=1.7.3
+
+# Cloud / API / LLM clients
+openai>=0.27.0
+ollama>=0.1.0
+huggingface-hub>=0.18.0
+kokoro>=0.1.0
+
+# Database / networking
+pymongo>=4.3
+dnspython>=2.3.0
+certifi>=2023.5.7
+
+# Dev / convenience
+python-dotenv>=1.0.0
+ipython>=8.0.0

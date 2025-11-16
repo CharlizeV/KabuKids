@@ -18,7 +18,11 @@ from openai import OpenAI
 from typing import Dict, List, Any
 from datetime import datetime, timezone
 
-
+from config import CAMERA_INDEX
+import utils
+import stt
+import fer
+import llm
 
 #Possible Additional Changes:
 # -- Add more interaction elements such as waiting for a response in 30 seconds before moving on.
@@ -98,16 +102,6 @@ ANALYSIS_PROMPT = ("""
     Food 2: Spinach: Lettuce - (Lettuce contains a variety of nutrients, including vitamins A and K, folate, and vitamin C.)
 """
 )
-
-import threading
-import time
-import cv2
-
-from config import CAMERA_INDEX
-import utils
-import stt
-import fer
-import llm
 
 transcript = {
     "role": "",                                 

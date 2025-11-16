@@ -4,7 +4,6 @@ import ollama
 
 from utils import load_history, save_history, trim_history
 
-
 FALLBACK_QUESTIONS = [
     "What's your favorite thing to eat right now?",
     "Can you tell me one food you tried that was tasty?",
@@ -12,7 +11,6 @@ FALLBACK_QUESTIONS = [
     "What color is your favorite snack?",
     "If you could eat any yummy thing tonight, what would it be?",
 ]
-
 
 def get_kabu_response(prompt: str) -> str:
     messages = load_history()
