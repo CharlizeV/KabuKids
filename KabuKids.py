@@ -39,7 +39,11 @@ try:
 except ImportError:
     pass
 
-import stt, llm, tts, mongodb, fer, utils
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
+from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1
 
 # ====== MongoDB Setup ======
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
