@@ -2,7 +2,7 @@ import random
 import time
 import ollama
 
-from utils import load_history, save_history, trim_history
+from .utils import load_history, save_history, trim_history
 
 FALLBACK_QUESTIONS = [
     "What's your favorite thing to eat right now?",

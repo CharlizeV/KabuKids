@@ -53,7 +53,7 @@ def init_counter(name: str, start: int = 0) -> None:
 
 def get_child_by_id(user_id: str) -> dict | None:
     try:
-        user_information = children_col.find_one({"username": user_id})
+        user_information = children_col.find_one({"_id": user_id})
         return user_information
     except ValueError:
         return None

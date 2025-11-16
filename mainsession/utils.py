@@ -5,7 +5,7 @@ import cv2
 import time
 from typing import Dict, List, Any
 from typing import List
-from config import HISTORY_FILE
+from .config import HISTORY_FILE
 from datetime import datetime, timezone, date
 
 

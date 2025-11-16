@@ -4,7 +4,7 @@ import cv2
 from PIL import Image
 from transformers import pipeline
 
-from config import CAMERA_INDEX
+from .config import CAMERA_INDEX
 
 
 # initialize face detector and FER pipeline

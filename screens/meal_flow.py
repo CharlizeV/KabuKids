@@ -5,12 +5,33 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
+from mainsession.config import CAMERA_INDEX
 from services.models import CURRENT_MEAL, init_current_meal, clear_current_meal, SAMPLE_REPORTS
 from db import meals_col
 from kivy.app import App
 from kivy.metrics import dp
 from datetime import datetime
 import uuid
+
+import json
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
+from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1, config
+
+import time
+import threading
+import cv2
+import numpy as np
+import sounddevice as sd
+from kokoro import KPipeline
+from PIL import Image
+from transformers import pipeline
+from openai import OpenAI
+from typing import Dict, List, Any
+from datetime import datetime, timezone
+from kivy.logger import Logger
 
 class PortionSizeBeforePage(Screen):
     pass
@@ -291,5 +312,309 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             print("❌ finish_meal error:", e)
             Popup(title="", content=Label(text="Failed to finish meal."), size_hint=(0.6,0.3)).open()
 
+transcription = [None]
+emotions = [None]
+camera = None
+start = None
+
 class SessionPage(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._session_thread = None
+        self._stop_event = threading.Event()
+        self.camera = None
+        self.pipeline = None
+        self.full_transcript = []
+
+    def on_pre_enter(self, *args):
+        self.start_session()
+
+    def on_leave(self, *args):
+        self.stop_session()
+
+    def start_session(self):
+        Logger.info("Kabu: start_session called")
+        if self._session_thread and self._session_thread.is_alive():
+            Logger.info("Kabu: session already running; skipping start")
+            return
+        self._stop_event.clear()
+        self._session_thread = threading.Thread(target=self._run_session_loop, daemon=True)
+        self._session_thread.start()
+        Logger.info("Kabu: session thread started -> %s", str(self._session_thread))
+
+    def stop_session(self):
+        Logger.info("Kabu: stop_session called")
+        self._stop_event.set()
+        # try to join the session thread (short timeout) so we can observe shutdown
+        try:
+            if self._session_thread:
+                self._session_thread.join(timeout=1.0)
+                if self._session_thread.is_alive():
+                    Logger.info("Kabu: session thread still alive after join timeout")
+        except Exception as e:
+            Logger.info("Kabu: error joining session thread: %s", e)
+        try:
+            if self.camera and hasattr(self.camera, "isOpened") and self.camera.isOpened():
+                self.camera.release()
+                Logger.info("Kabu: camera released in stop_session")
+        except Exception as e:
+            Logger.info("Kabu: camera release error: %s", e)
+
+    def _run_session_loop(self):
+        Logger.info("Kabu: _run_session_loop starting")
+        start = datetime.now(timezone.utc)
+        try:
+            # keep original initialization (unchanged) but log key steps
+            Logger.info("Kabu: loading child_data")
+            child_data = mongodb.get_child_by_id(CURRENT_MEAL.get("user_id"))
+            Logger.info("Kabu: child_data loaded: %s", str(child_data.get("name")))
+            
+            USER_CONTEXT = f"""
+                WHO YOU ARE WITH:
+                You are talking to a {child_data.get('gender')} child who is eating a meal as you speak.
+                Their name is {child_data.get('name')}, they are {utils.compute_age_from(child_data.get('birthday'))} years old.
+                
+                THE LIST OF THINGS THE CHILD LIKES TO TALK ABOUT:
+                {child_data.get('likes')}
+
+                THE LIST OF THINGS THE CHILD DISLIKES TO TALK ABOUT (AVOID THESE TOPICS, PHRASES, OR SENTENCES WHEN TALKING TO THE CHILD):
+                {child_data.get('dislikes')}
+
+                THE LIST OF INGREDIENTS THE CHILD IS EATING IN THIS MEAL ARE THE FOLLOWING:
+                {CURRENT_MEAL.get('food_before_meal')}
+
+                CHILD'S GOAL:
+                {child_data.get('goals')}
+                """
+
+            CONTEXT = """
+            WHO YOU ARE:
+            You are Kabu, a personal eating chatbot companion for kids.
+            You are Joyful and empathic. Ready to bring fun to children as much as possible.
+
+            YOUR GOAL:
+            Keeping the child engaged so that they enjoy and most importantly finish their meal.
+
+            ENCOURAGE:
+            Keep the sentences to a minimum of 4.
+            The conversation to be child-friendly. 
+            If the child wants to talk about his topic focus on that topic instead.
+            Ask the child about what food they are currently eating or have eaten recently.
+            Before replying to the child, consider their facial expressions to make your response more empathetic.
+            TRY YOUR VERY BEST TO ASK WHAT THEY ARE EATING IF THEY HAVE NOT MENTIONED IT YET. After they mentioned what they ate remember that and do not ask them again in later conversations.
+
+            AVOID:
+            Asking too much questions.
+            Making the same replies like your other prompts from before.
+            Asking to join your for meals, because you are a chatbot you cannot eat physically. 
+            ANY USE OF PROFANITY. 
+            SUGGESTING TO CHILD TO EAT FOOD. Unless the child asks for suggestions, do not suggest food items.
+            Do not assume that you know what's on the plate of the child. You do not have that information.
+
+            ADDITONAL CONTEXTS:
+            Rememeber what the child hated or liked about the meal, but do not bring it up unless the child does first. You may ask follow up questions about it.
+
+            FORMAT YOUR REPONSE AS BELOW (EVERY REPLY SHOULD HAVE THIS FORMAT THIS IS A NON NEGOTIABLE):
+            Kabu: <your response here>
+            Kabu_emotion: [Excited, Happy, Neutral, Sad] (Note: EMOTIONS SHOULD ONLY BE FROM THIS LIST: Excited, Happy, Neutral, Sad. Do not create new emotions outside of this list.)
+
+            FOLLOW THIS EXACT FORMAT IN EVERY RESPONSE. DO NOT DEVIATE FROM IT.
+            Example: 
+            Kabu: I'm having a great time chatting with you while you eat your meal! What is your favorite food to eat?
+            Kabu_emotion: [Happy]
+            """ 
+
+            ANALYSIS_PROMPT = """
+            Using the conversation history above as the ONLY source of facts, analyze and provide:
+            1) Three concise, actionable conversation recommendations to better engage the child.
+            2) A list of foods the child expressed they do NOT like (if any). If you are going to suggest anything make sure it's a healthy alternative option of an ingredient. Example: If you are suggesting an alternative for broccoli then suggest something like cauliflower.
+            3) For each disliked food, suggest 1-2 child-friendly alternatives or ways to present it.
+            Format your response clearly and keep it short. Do not invent facts; base everything on the conversation_history.
+
+            Format your response as below:
+            Conversation Recommendations:
+            Recommendation 1:
+            Recommendation 2:
+            Recommendation 3:
+            Disliked Foods:
+            Food 1: Alternatives
+            Food 2: Alternatives
+            (Add more if applicable)
+
+            Example:
+            Conversation Recommendations:
+            Recommendation 1: Try asking the child about their favorite color of food to make the conversation more engaging.
+            Recommendation 2: Use more playful language to keep the child interested.
+            Recommendation 3: Ask the child about their favorite snacks to learn more about their preferences.
+            Disliked Foods:
+            Food 1: Broccoli: Cauliflower - (vitamins C, K, B6, and folate, and also contains fiber, choline, and various minerals like potassium and magnesium)
+            Food 2: Spinach: Lettuce - (Lettuce contains a variety of nutrients, including vitamins A and K, folate, and vitamin C.)
+            """
+
+            Logger.info("Kabu: initializing pipeline")
+            try:
+                pipeline = KPipeline(lang_code='a')
+                self.pipeline = pipeline
+                Logger.info("Kabu: pipeline initialized")
+            except Exception as e:
+                Logger.info("Kabu: pipeline init failed: %s", e)
+                pipeline = None
+                self.pipeline = None
+
+            Logger.info("Kabu: opening camera index %s", config.CAMERA_INDEX)
+            try:
+                camera = cv2.VideoCapture(config.CAMERA_INDEX)
+                self.camera = camera
+                if not camera.isOpened():
+                    Logger.info("Kabu: camera not opened")
+                else:
+                    Logger.info("Kabu: camera opened")
+            except Exception as e:
+                Logger.info("Kabu: camera init exception: %s", e)
+                camera = None
+                self.camera = None
+
+            utils.reset_history(system_message={
+                "role": "system",
+                "content": USER_CONTEXT + CONTEXT,
+            })
+            Logger.info("Kabu: utils history reset")
+
+            start_time = datetime.now(timezone.utc)
+            Logger.info("Kabu: entering main loop")
+
+            # MAIN LOOP (preserve original logic) with safer joins and debug logging
+            while not self._stop_event.is_set():
+                Logger.info("Kabu: loop iteration start")
+                transcription = [None]
+                emotions = [None]
+
+                def audio_task():
+                    try:
+                        Logger.info("Kabu: audio_task started")
+                        audio = stt.get_audio(wait_time=30.0)
+                        if isinstance(audio, str) and audio == "NO_SPEECH":
+                            transcription[0] = "NO_SPEECH"
+                            return
+                        if audio is None:
+                            transcription[0] = ""
+                            return
+                        transcription[0] = stt.get_transcribed_audio(audio) or ""
+                        Logger.info("Kabu: audio_task finished -> %s", str(transcription[0])[:80])
+                    except Exception as e:
+                        Logger.info("Kabu: audio_task exception: %s", e)
+                        transcription[0] = ""
+
+                def fer_task():
+                    try:
+                        Logger.info("Kabu: fer_task started")
+                        if camera:
+                            result = fer.get_facial_expression(camera, duration=5.0)
+                            emotions[0] = result if result is not None else []
+                        else:
+                            emotions[0] = []
+                        Logger.info("Kabu: fer_task finished -> %s", str(emotions[0]))
+                    except Exception as e:
+                        Logger.info("Kabu: fer_task exception: %s", e)
+                        emotions[0] = []
+
+                audio_thread = threading.Thread(target=audio_task, daemon=True)
+                fer_thread = threading.Thread(target=fer_task, daemon=True)
+
+                audio_thread.start()
+                fer_thread.start()
+
+                # join with timeouts so we remain responsive to stop_event
+                audio_thread.join(timeout=35.0)
+                fer_thread.join(timeout=12.0)
+
+                # log if threads didn't finish
+                if audio_thread.is_alive():
+                    Logger.info("Kabu: audio_thread still alive after join timeout")
+                if fer_thread.is_alive():
+                    Logger.info("Kabu: fer_thread still alive after join timeout")
+
+                user_text = (transcription[0] or "").strip()
+                emotion_list = emotions[0] or []
+                emotion_str = ", ".join(emotion_list) if emotion_list else "unknown"
+
+                self.full_transcript.append({"speaker": "child", 
+                                             "text": user_text, 
+                                             "emotions": emotion_list, 
+                                             "timestamp": datetime.now(timezone.utc).isoformat()})
+
+                Logger.info("Kabu: got user_text='%s' emotions=%s", str(user_text)[:80], str(emotion_list))
+
+                if user_text == "NO_SPEECH":
+                    Logger.info("Kabu: NO_SPEECH detected, continuing")
+                    if self._stop_event.wait(0.1):
+                        break
+                    continue
+                if not user_text:
+                    if self._stop_event.wait(0.1):
+                        break
+                    continue
+
+                # rest of original processing (LLM / TTS / append transcript)
+                try:
+                    Logger.info("Kabu: requesting LLM response")
+                    reply = llm.get_kabu_response(f"The child said: \"{user_text}\". Observed emotion(s): {emotion_str}.")
+                    parsed = utils.parse_kabu_reply(reply)
+                    Logger.info("Kabu: LLM returned")
+                    
+                    self.full_transcript.append({"speaker": "kabu", 
+                                                 "text": parsed['text'],
+                                                 "timestamp": datetime.now(timezone.utc).isoformat(),
+                                                 "emotion": parsed['emotions']})
+                    #If you to know what emotion the bot is giving you have to input parsed['emotions']
+
+                    try:
+                        if pipeline:
+                            tts.tts_kokoro(pipeline, parsed['text'])
+                    except Exception as e:
+                        Logger.info("Kabu: tts error: %s", e)
+                except Exception as e:
+                    Logger.info("Kabu: LLM/processing error: %s", e)
+
+                # short sleep but remain responsive
+                if self._stop_event.wait(0.1):
+                    break
+
+        except Exception as e:
+            Logger.info("Kabu: _run_session_loop top-level exception: %s", e)
+        finally:
+            Logger.info("Kabu: _run_session_loop finishing, cleaning up")
+            
+            try:
+                analysis_reply = llm.get_kabu_response(ANALYSIS_PROMPT)
+                Logger.inf("\n--- Conversation Analysis ---")
+                Logger.inf(analysis_reply)
+                parsed = utils.parse_kabu_reply_final(analysis_reply)
+                Logger.info(parsed["recommendations"])
+                Logger.info(parsed["disliked_foods"])
+                # persist analysis into history
+            except Exception as e:
+                Logger.inf("Analysis request failed:", e)
+
+            end = datetime.now(timezone.utc)
+
+            meal_hash ={
+            "start_time": start.isoformat(),
+            "end_time": end.isoformat(),
+            "date": start.date().isoformat(),
+            "transcript": self.full_transcript,
+            "conversation_suggestions": parsed["recommendations"],
+            "ingredient_suggestions": parsed["disliked_foods"]
+            }
+
+            meal_id = mongodb.insert_meal(meal_hash)
+            Logger.info(f"Meal data saved with meal_id: {meal_id}")
+
+            try:
+                if self.camera and hasattr(self.camera, "isOpened") and self.camera.isOpened():
+                    self.camera.release()
+                    Logger.info("Kabu: camera released in finally")
+            except Exception as e:
+                Logger.info("Kabu: camera release finally error: %s", e)
+            # ensure session thread will exit
+            Logger.info("Kabu: _run_session_loop exited")

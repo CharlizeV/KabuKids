@@ -2,7 +2,7 @@ import time
 import numpy as np
 import sounddevice as sd
 from transformers import pipeline
-from config import SAMPLE_RATE, PROCESS_TIMEOUT
+from .config import SAMPLE_RATE, PROCESS_TIMEOUT
 
 
 # Initialize ASR pipeline on import (may take time)
