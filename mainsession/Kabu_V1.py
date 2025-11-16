@@ -1,28 +1,16 @@
-import os
-import json
 import time
 import threading
-import collections
 import cv2
 import numpy as np
 import sounddevice as sd
-import torch
-import ollama
-import random
-import tts
-import mongodb
+from . import tts
+from . import mongodb
 from kokoro import KPipeline
 from PIL import Image
 from transformers import pipeline
 from openai import OpenAI
 from typing import Dict, List, Any
 from datetime import datetime, timezone
-
-from config import CAMERA_INDEX
-import utils
-import stt
-import fer
-import llm
 
 #Possible Additional Changes:
 # -- Add more interaction elements such as waiting for a response in 30 seconds before moving on.
@@ -103,6 +91,16 @@ ANALYSIS_PROMPT = ("""
 """
 )
 
+import threading
+import time
+import cv2
+
+from . config import CAMERA_INDEX
+from . import utils
+from . import stt
+from . import fer
+from . import llm
+
 transcript = {
     "role": "",                                 
     "current_time": "",  
@@ -152,7 +150,7 @@ def main():
         print("Starting Kabu MEALTIME... Press Ctrl+C to stop.")
 
         while True:
-            transcription = [None]
+            global transcription
             emotions = [None]
 
             def audio_task():
