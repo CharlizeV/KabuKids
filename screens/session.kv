@@ -1,13 +1,28 @@
 <SessionPage>:
     name: "session"
-    GridLayout:
-        cols: 2
-        Label:
-            text: "session Page"
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    FloatLayout:
+        # Centered emotion image
+        Image:
+            id: emos_img
+            source: ""    # will be set from Python
+            allow_stretch: True
+            keep_ratio: True
+            size_hint: None, None
+            size: dp(220), dp(220)
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+        # Small button in the top-right corner
         Button:
-            text: "Input Ingredients After Meal"
-            on_press: app.root.current = "inputIngredientsAM"
-        Label:
-            text: ""
-        Label:
-            text: ""
+            text: "End Session"
+            size_hint: None, None
+            size: dp(140), dp(36)
+            pos_hint: {"right": 0.98, "top": 0.95}
+            background_color: 1, 0, 0, 1
+            on_release: root.end_session()

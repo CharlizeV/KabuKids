@@ -2,6 +2,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.clock import Clock
 import threading
+import uuid
 from widgets.meal_item import MealItem
 from services.models import SAMPLE_REPORTS, fetch_reports_for_user
 from db import meals_col, db
@@ -16,6 +17,7 @@ from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+from bson.objectid import ObjectId
 
 # Fallback color constants if not defined elsewhere in the project
 DARK_COLOR = (0, 0, 0, 1)
@@ -41,11 +43,11 @@ class DashboardPage(Screen):
         else:
             self.user_name = "User"
 
-        if not self._reports_loaded:
-            self.ids.meals_list.clear_widgets()
-            self.load_reports_from_db()
-        else:
-            self._populate_list()
+        # Always refresh the reports when the dashboard is shown so the list
+        # reflects any newly inserted meals (e.g., coming from SessionPage).
+        self.ids.meals_list.clear_widgets()
+        self._reports_loaded = False
+        self.load_reports_from_db()
 
     def load_reports_from_db(self):
         # Get current user id from the running app
@@ -70,7 +72,63 @@ class DashboardPage(Screen):
             global SAMPLE_REPORTS
             #----DEBUG CHECKINGGG
             print(f"[dashboard_report] on_reports_fetched called, reports_count={len(reports)}")
-            SAMPLE_REPORTS = reports
+
+            # Normalize reports -> ensure string ids and normalized fields
+            normalized = {}
+            # support reports as dict or list
+            items = reports.items() if isinstance(reports, dict) else enumerate(reports)
+            for _, r in items:
+                try:
+                    rep = dict(r) if isinstance(r, dict) else dict(r)
+                except Exception:
+                    rep = {}
+                # normalize id to string
+                raw_id = rep.get("_id") or rep.get("meal_id") or rep.get("id")
+                rep["_id"] = str(raw_id) if raw_id is not None else str(rep.get("meal_id", "")) or str(uuid.uuid4())
+
+                # normalize/attach user id (string)
+                raw_user = rep.get("user_id") or rep.get("userId") or rep.get("user") or rep.get("owner")
+                rep["user_id"] = str(raw_user) if raw_user is not None else ""
+
+                # ensure transcript exists
+                rep["transcript"] = rep.get("transcript") or []
+
+                # normalize conversation suggestions to list
+                conv = rep.get("conversation_suggestions") or rep.get("conversationSuggestions") or rep.get("recommendations") or []
+                if isinstance(conv, str):
+                    conv = [conv]
+                rep["conversation_suggestions"] = list(conv)
+
+                # normalize ingredient / disliked suggestions to list of strings
+                raw_disliked = rep.get("ingredient_suggestions") or rep.get("ingredientSuggestions") or rep.get("disliked_foods") or []
+                ingredient_list = []
+                if isinstance(raw_disliked, dict):
+                    for k, v in raw_disliked.items():
+                        if isinstance(v, (list, tuple)):
+                            ingredient_list.append(f"{k}: {', '.join(map(str, v))}")
+                        else:
+                            ingredient_list.append(f"{k}: {v}")
+                elif isinstance(raw_disliked, (list, tuple)):
+                    ingredient_list = [str(x) for x in raw_disliked]
+                elif raw_disliked:
+                    ingredient_list = [str(raw_disliked)]
+                rep["ingredient_suggestions"] = ingredient_list
+
+                # ensure food arrays exist
+                rep["food_before_meal"] = rep.get("food_before_meal") or []
+                rep["food_after_meal"] = rep.get("food_after_meal") or []
+
+                normalized[rep["_id"]] = rep
+
+            # FILTER: keep only reports that belong to this user_id
+            try:
+                user_id_str = str(user_id) if user_id is not None else ""
+                filtered = {k: v for k, v in normalized.items() if (v.get("user_id", "") == user_id_str)}
+                print(f"[dashboard_report] fetched {len(normalized)} reports, {len(filtered)} match user_id={user_id_str}")
+            except Exception:
+                filtered = normalized
+
+            SAMPLE_REPORTS = filtered
             self._reports_loaded = True
             Clock.schedule_once(lambda dt: self._populate_list(), 0)
 
@@ -202,8 +260,8 @@ class TranscriptPage(Screen):
             content.add_widget(error)
             return
 
-        report = SAMPLE_REPORTS[meal_id]
-        for msg in report["transcript"]:
+        report = SAMPLE_REPORTS.get(meal_id, {})
+        for msg in report.get("transcript", []):
             role = msg["role"]
             text = msg["text"]
             emotion = msg.get("emotion", "neutral")
@@ -270,7 +328,7 @@ class TranscriptPage(Screen):
                 width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
                 texture_size=lambda inst, size: setattr(inst, 'height', size[1])
             )
- 
+
             # Message text
             msg_label = Label(
                 text=text,

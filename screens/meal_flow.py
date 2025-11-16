@@ -11,11 +11,13 @@ from db import meals_col
 from kivy.app import App
 from kivy.metrics import dp
 from datetime import datetime
+from kivy.clock import Clock
 import uuid
 
 import json
 import sys
 import os
+from kivy.clock import Clock
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
 from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1, config
@@ -233,15 +235,15 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
            This uses dummy portion/session data (portions/session pages should set real values into CURRENT_MEAL).
         """
         try:
-            # ensure we have a buffer
+            # ensure buffer exists
             if not CURRENT_MEAL:
                 init_current_meal()
+
             # collect finished vs not finished from UI
             container = self.ids.food_checkboxes
             finished = []
             not_finished = []
             for row in container.children:
-                # find checkbox and label inside row
                 cb = None
                 lbl = None
                 for w in row.children:
@@ -249,17 +251,19 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
                         cb = w
                     elif hasattr(w, "text"):
                         lbl = w
-                name = lbl.text if lbl else ""
+                name = (lbl.text.strip() if lbl and lbl.text else "").strip()
+                if not name:
+                    continue
                 if cb and cb.active:
                     finished.append(name)
                 else:
                     not_finished.append(name)
 
-            # normalize names (remove bullet/case)
+            # normalize names
             finished = [s.strip() for s in finished]
             not_finished = [s.strip() for s in not_finished]
 
-            # update CURRENT_MEAL fields (use dummy start/end times/summary/portions if not set)
+            # update CURRENT_MEAL fields
             now = datetime.now()
             if not CURRENT_MEAL.get("date"):
                 CURRENT_MEAL["date"] = now.strftime("%B %d, %Y")
@@ -267,14 +271,22 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
                 CURRENT_MEAL["start_time"] = now.strftime("%I:%M %p").lstrip("0")
             if not CURRENT_MEAL.get("end_time"):
                 CURRENT_MEAL["end_time"] = now.strftime("%I:%M %p").lstrip("0")
+
+            # food arrays: before / after / not finished
             CURRENT_MEAL["food_before_meal"] = CURRENT_MEAL.get("food_before_meal", []) or []
-            CURRENT_MEAL["food_not_finished"] = not_finished
-            # dummy portions (portions pages should set these)
+            # food_after_meal should be the items NOT checked (leftover / after-meal)
+            CURRENT_MEAL["food_after_meal"] = not_finished or []
+            # keep explicit not_finished and finished buckets
+            CURRENT_MEAL["food_not_finished"] = not_finished or []
+            CURRENT_MEAL["food_finished"] = finished or []
+
+            # dummy portions (if not set)
             if not CURRENT_MEAL.get("portion_before_image"):
                 CURRENT_MEAL["portion_before_image"] = "assets/portion_before_dummy.jpg"
             if not CURRENT_MEAL.get("portion_after_image"):
                 CURRENT_MEAL["portion_after_image"] = "assets/portion_after_dummy.jpg"
-            # dummy summary & suggestions (session page should set these)
+
+            # keep existing LLM-generated summary/suggestions if present, otherwise fallback
             if not CURRENT_MEAL.get("summary"):
                 CURRENT_MEAL["summary"] = "Auto-generated summary (dummy)."
             if not CURRENT_MEAL.get("conversation_suggestions"):
@@ -282,31 +294,56 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             if not CURRENT_MEAL.get("ingredient_suggestions"):
                 CURRENT_MEAL["ingredient_suggestions"] = ["Carrots - good source of beta-carotene."]
 
-            # ensure required keys exist and set _id if missing
+            # ensure _id exists before insert
             if not CURRENT_MEAL.get("_id"):
                 CURRENT_MEAL["_id"] = str(uuid.uuid4())
 
-            # Insert into MongoDB
+            # attach currently logged-in user's id (if available)
+            try:
+                app = App.get_running_app()
+                current_user = getattr(app, "current_user", None)
+                if current_user:
+                    if isinstance(current_user, dict):
+                        uid = current_user.get("user_id") or current_user.get("id") or current_user.get("_id") or current_user.get("userId")
+                    else:
+                        uid = getattr(current_user, "user_id", None) or getattr(current_user, "id", None)
+                    if uid is not None:
+                        CURRENT_MEAL["user_id"] = str(uid)
+            except Exception:
+                pass
+
+            # Insert into MongoDB and ensure inserted id is a string key used in SAMPLE_REPORTS
+            meal_doc = None
             try:
                 result = meals_col.insert_one(CURRENT_MEAL)
-                print("✅ Inserted meal:", result.inserted_id)
+                inserted_id = str(result.inserted_id)
+                print("✅ Inserted meal:", inserted_id)
                 meal_doc = CURRENT_MEAL.copy()
+                meal_doc["_id"] = inserted_id
+                # ensure inserted doc contains user_id
+                meal_doc["user_id"] = meal_doc.get("user_id", CURRENT_MEAL.get("user_id"))
             except Exception as e:
-                # Fallback: still use CURRENT_MEAL as the inserted doc (but inform)
                 print("❌ failed to insert meal to MongoDB:", e)
+                if not CURRENT_MEAL.get("_id"):
+                    CURRENT_MEAL["_id"] = str(uuid.uuid4())
                 meal_doc = CURRENT_MEAL.copy()
 
-            # Update in-memory SAMPLE_REPORTS so report page can immediately show it
-            SAMPLE_REPORTS[meal_doc["_id"]] = meal_doc
+            # Ensure food_after_meal exists in the stored doc (defensive)
+            meal_doc["food_after_meal"] = meal_doc.get("food_after_meal", []) or []
+            meal_doc["food_finished"] = meal_doc.get("food_finished", []) or []
+            meal_doc["food_not_finished"] = meal_doc.get("food_not_finished", []) or []
 
-            # Select the new meal and navigate to report
-            app = App.get_running_app()
-            app.selected_meal_id = meal_doc["_id"]
-            # clear buffer for next meal
+            # Update in-memory SAMPLE_REPORTS and select the new meal
+            try:
+                SAMPLE_REPORTS[str(meal_doc["_id"])] = meal_doc
+                app = App.get_running_app()
+                app.selected_meal_id = str(meal_doc["_id"])
+            except Exception:
+                pass
+
+            # Clear current buffer and navigate to dashboard
             clear_current_meal()
-
-            # navigate to report screen
-            self.manager.current = "report"
+            self.manager.current = "dashboard"
 
         except Exception as e:
             print("❌ finish_meal error:", e)
@@ -316,6 +353,37 @@ transcription = [None]
 emotions = [None]
 camera = None
 start = None
+
+ANALYSIS_PROMPT = """
+            Using the conversation history above as the ONLY source of facts, analyze and provide:
+            1) Three concise, actionable conversation recommendations to better engage the child.
+            2) A list of foods the child expressed they do NOT like (if any). If you are going to suggest anything make sure it's a healthy alternative option of an ingredient. Example: If you are suggesting an alternative for broccoli then suggest something like cauliflower.
+            3) For each disliked food, suggest 1-2 child-friendly alternatives or ways to present it.
+            Format your response clearly and keep it short. Do not invent facts; base everything on the conversation_history.
+
+            Format your response as below:
+            Conversation Recommendations:
+            Recommendation 1:
+            Recommendation 2:
+            Recommendation 3:
+            Disliked Foods:
+            Food 1: Alternatives
+            Food 2: Alternatives
+            (Add more if applicable)
+
+            Example:
+            Conversation Recommendations:
+            Recommendation 1: Try asking the child about their favorite color of food to make the conversation more engaging.
+            Recommendation 2: Use more playful language to keep the child interested.
+            Recommendation 3: Ask the child about their favorite snacks to learn more about their preferences.
+            Disliked Foods:
+            Food 1: Broccoli: Cauliflower - (vitamins C, K, B6, and folate, and also contains fiber, choline, and various minerals like potassium and magnesium)
+            Food 2: Spinach: Lettuce - (Lettuce contains a variety of nutrients, including vitamins A and K, folate, and vitamin C.)
+            """
+
+SUMMARY_PROMPT = """
+            Using all of the context above create a 5 sentence summary of what happened during the meal.
+            """
 
 class SessionPage(Screen):
     def __init__(self, **kwargs):
@@ -327,6 +395,11 @@ class SessionPage(Screen):
         self.full_transcript = []
 
     def on_pre_enter(self, *args):
+        # set default neutral image immediately
+        try:
+            Clock.schedule_once(lambda dt: self.update_emotion_image(["Neutral"]), 0)
+        except Exception:
+            pass
         self.start_session()
 
     def on_leave(self, *args):
@@ -359,6 +432,50 @@ class SessionPage(Screen):
                 Logger.info("Kabu: camera released in stop_session")
         except Exception as e:
             Logger.info("Kabu: camera release error: %s", e)
+
+    def update_emotion_image(self, emotions: list):
+        """Pick an image from KabuEmotions based on emotions and show it in the center Image."""
+        try:
+            # choose priority: first known emotion, fallback to neutral
+            fname_map = {
+                "neutral": "neutral.png",
+                "happy": "happy.jpg",
+                "excited": "excited.jpg",
+                "sad": "sad.jpg"
+            }
+            picked = "neutral.png"
+            if emotions:
+                for e in emotions:
+                    if not e:
+                        continue
+                    key = str(e).strip().lower()
+                    if key in fname_map:
+                        picked = fname_map[key]
+                        break
+            img_path = os.path.join(os.path.dirname(__file__), "KabuEmotions", picked)
+            if not os.path.exists(img_path):
+                # fallback: try just picked name in project root
+                img_path = picked
+            # set source on main thread
+            if 'emos_img' in self.ids:
+                self.ids.emos_img.source = img_path
+                # force reload
+                self.ids.emos_img.reload()
+            Logger.info("Kabu: emotion image set -> %s", img_path)
+        except Exception as e:
+            Logger.info("Kabu: update_emotion_image error: %s", e)
+
+    def end_session(self, *args):
+        """Called by End Session button: stop worker and navigate to portionSizeAfter."""
+        try:
+            Logger.info("Kabu: end_session pressed - stopping session")
+            self.stop_session()
+        except Exception as e:
+            Logger.info("Kabu: end_session stop error: %s", e)
+        try:
+            App.get_running_app().root.current = "portionSizeAfter"
+        except Exception as e:
+            Logger.info("Kabu: end_session nav error: %s", e)
 
     def _run_session_loop(self):
         Logger.info("Kabu: _run_session_loop starting")
@@ -423,33 +540,6 @@ class SessionPage(Screen):
             Kabu: I'm having a great time chatting with you while you eat your meal! What is your favorite food to eat?
             Kabu_emotion: [Happy]
             """ 
-
-            ANALYSIS_PROMPT = """
-            Using the conversation history above as the ONLY source of facts, analyze and provide:
-            1) Three concise, actionable conversation recommendations to better engage the child.
-            2) A list of foods the child expressed they do NOT like (if any). If you are going to suggest anything make sure it's a healthy alternative option of an ingredient. Example: If you are suggesting an alternative for broccoli then suggest something like cauliflower.
-            3) For each disliked food, suggest 1-2 child-friendly alternatives or ways to present it.
-            Format your response clearly and keep it short. Do not invent facts; base everything on the conversation_history.
-
-            Format your response as below:
-            Conversation Recommendations:
-            Recommendation 1:
-            Recommendation 2:
-            Recommendation 3:
-            Disliked Foods:
-            Food 1: Alternatives
-            Food 2: Alternatives
-            (Add more if applicable)
-
-            Example:
-            Conversation Recommendations:
-            Recommendation 1: Try asking the child about their favorite color of food to make the conversation more engaging.
-            Recommendation 2: Use more playful language to keep the child interested.
-            Recommendation 3: Ask the child about their favorite snacks to learn more about their preferences.
-            Disliked Foods:
-            Food 1: Broccoli: Cauliflower - (vitamins C, K, B6, and folate, and also contains fiber, choline, and various minerals like potassium and magnesium)
-            Food 2: Spinach: Lettuce - (Lettuce contains a variety of nutrients, including vitamins A and K, folate, and vitamin C.)
-            """
 
             Logger.info("Kabu: initializing pipeline")
             try:
@@ -534,6 +624,7 @@ class SessionPage(Screen):
                 if fer_thread.is_alive():
                     Logger.info("Kabu: fer_thread still alive after join timeout")
 
+                # after getting user_text/emotion from worker threads
                 user_text = (transcription[0] or "").strip()
                 emotion_list = emotions[0] or []
                 emotion_str = ", ".join(emotion_list) if emotion_list else "unknown"
@@ -555,6 +646,9 @@ class SessionPage(Screen):
                         break
                     continue
 
+                # DO NOT update UI here with FER (user) emotion — update from Kabu's parsed emotion below
+                # (keeps display tied to Kabu's chosen emotion)
+
                 # rest of original processing (LLM / TTS / append transcript)
                 try:
                     Logger.info("Kabu: requesting LLM response")
@@ -567,6 +661,15 @@ class SessionPage(Screen):
                                                  "timestamp": datetime.now(timezone.utc).isoformat(),
                                                  "emotion": parsed['emotions']})
                     #If you to know what emotion the bot is giving you have to input parsed['emotions']
+
+                    # show Kabu's emotion image (ensure it's a list)
+                    try:
+                        kabu_emotions = parsed.get('emotions') or []
+                        if isinstance(kabu_emotions, str):
+                            kabu_emotions = [kabu_emotions]
+                        Clock.schedule_once(lambda dt, el=kabu_emotions: self.update_emotion_image(el), 0)
+                    except Exception as e:
+                        Logger.info("Kabu: failed to schedule Kabu emotion image update: %s", e)
 
                     try:
                         if pipeline:
@@ -584,37 +687,71 @@ class SessionPage(Screen):
             Logger.info("Kabu: _run_session_loop top-level exception: %s", e)
         finally:
             Logger.info("Kabu: _run_session_loop finishing, cleaning up")
-            
+            # analysis (best-effort) — guard parsed so we can continue on failure
             try:
                 analysis_reply = llm.get_kabu_response(ANALYSIS_PROMPT)
-                Logger.inf("\n--- Conversation Analysis ---")
-                Logger.inf(analysis_reply)
-                parsed = utils.parse_kabu_reply_final(analysis_reply)
-                Logger.info(parsed["recommendations"])
-                Logger.info(parsed["disliked_foods"])
-                # persist analysis into history
+                Logger.info("\n--- Conversation Analysis ---")
+                Logger.info(str(analysis_reply)[:2000])
+                parsed = utils.parse_kabu_reply_final(analysis_reply) or {}
+                Logger.info("Kabu: analysis parsed keys -> %s", list(parsed.keys()))
             except Exception as e:
-                Logger.inf("Analysis request failed:", e)
+                Logger.info("Analysis request failed: %s", e)
+                parsed = {"recommendations": [], "disliked_foods": []}
 
-            end = datetime.now(timezone.utc)
+            # summary (best-effort)
+            try:
+                end = datetime.now(timezone.utc)
+                Logger.info("Kabu: requesting summary")
+                summary = llm.get_kabu_response(SUMMARY_PROMPT) or ""
+            except Exception as e:
+                Logger.info("Kabu: summary request failed: %s", e)
+                summary = ""
 
-            meal_hash ={
-            "start_time": start.isoformat(),
-            "end_time": end.isoformat(),
-            "date": start.date().isoformat(),
-            "transcript": self.full_transcript,
-            "conversation_suggestions": parsed["recommendations"],
-            "ingredient_suggestions": parsed["disliked_foods"]
-            }
+            # build meal document defensively
+            try:
+                meal_hash = {
+                    "start_time": start.isoformat() if start else datetime.now(timezone.utc).isoformat(),
+                    "end_time": end.isoformat() if 'end' in locals() else datetime.now(timezone.utc).isoformat(),
+                    "date": (start.date().isoformat() if start else datetime.now(timezone.utc).date().isoformat()),
+                    "transcript": self.full_transcript if self.full_transcript else [],
+                    "conversation_suggestions": parsed.get("recommendations", parsed.get("conversation_suggestions", [])),
+                    "ingredient_suggestions": parsed.get("disliked_foods", parsed.get("ingredient_suggestions", [])),
+                    "food_before_meal": CURRENT_MEAL.get("food_before_meal", []),
+                    "food_after_meal": CURRENT_MEAL.get("food_after_meal", []),
+                    "summary": summary or CURRENT_MEAL.get("summary", ""),
+                }
+                # attach user id if available (prefer CURRENT_MEAL then app.current_user)
+                try:
+                    meal_hash["user_id"] = CURRENT_MEAL.get("user_id") or (str(getattr(App.get_running_app(), "current_user", {}).get("user_id", "")) if isinstance(getattr(App.get_running_app(), "current_user", None), dict) else None)
+                except Exception:
+                    meal_hash["user_id"] = CURRENT_MEAL.get("user_id")
+            except Exception as e:
+                Logger.info("Kabu: failed to build meal_hash: %s", e)
+                meal_hash = {
+                    "start_time": datetime.now(timezone.utc).isoformat(),
+                    "end_time": datetime.now(timezone.utc).isoformat(),
+                    "date": datetime.now(timezone.utc).date().isoformat(),
+                    "transcript": self.full_transcript or [],
+                    "conversation_suggestions": [],
+                    "ingredient_suggestions": [],
+                    "food_before_meal": CURRENT_MEAL.get("food_before_meal", []),
+                    "food_after_meal": CURRENT_MEAL.get("food_after_meal", []),
+                    "summary": summary or "",
+                }
 
-            meal_id = mongodb.insert_meal(meal_hash)
-            Logger.info(f"Meal data saved with meal_id: {meal_id}")
+            # insert meal (best-effort)
+            try:
+                meal_id = mongodb.insert_meal(meal_hash)
+                Logger.info("Meal data saved with meal_id: %s", meal_id)
+            except Exception as e:
+                Logger.info("Kabu: failed to insert meal: %s", e)
 
+            # always attempt to release camera
             try:
                 if self.camera and hasattr(self.camera, "isOpened") and self.camera.isOpened():
                     self.camera.release()
                     Logger.info("Kabu: camera released in finally")
             except Exception as e:
                 Logger.info("Kabu: camera release finally error: %s", e)
-            # ensure session thread will exit
+
             Logger.info("Kabu: _run_session_loop exited")
