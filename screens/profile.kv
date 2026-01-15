@@ -1,8 +1,16 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import super_light colors.SUPER_LIGHT
+#:import dp kivy.metrics.dp
+
 <ProfilePage>:
     name: "profile"
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1  # White background
+            rgba: secondary_color
         Rectangle:
             pos: self.pos
             size: self.size
@@ -20,41 +28,26 @@
             height: 60  # Fixed header height
 
             # Left square (aligned left)
-            Button:
-                size_hint_x: None
-                width: 40
-                background_color: 0, 0, 0, 0  # Transparent background
-                on_release: app.root.current = "dashboard"  # ← Switches to dashboard screen
-
-                canvas.before:
-                    Color:
-                        rgba: 0.2, 0.6, 1, 1  # Blue
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            ImageButton:
+                source: "screens/icons/return.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_press: app.root.current = "dashboard"
 
             # Center text
             Label:
                 text: "Profile"
+                font_name: "screens/fonts/Valekon.otf"
                 font_size: 20
-                color: 0, 0, 0, 1  # Black text
+                color: primary_color
                 halign: 'center'
-                valign: 'middle'   # ← use 'middle', not 'center'
+                valign: 'middle'  
                 text_size: self.size  # ← critical for alignment!
 
-            # Right square (aligned right)
-            Button:
-                size_hint_x: None
-                width: 40
-                background_color: 0, 0, 0, 0  # Transparent background
-                on_release: app.root.current = "editProfile"
-
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.3, 0.3, 1  # Red
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            # Right square 
+            ImageButton:
+                source: "screens/icons/edit.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_press: app.root.current = "editProfile"
 
         # --- Add a Placeholder for Profile Content ---
         BoxLayout:
@@ -87,9 +80,10 @@
 
             Label:
                 text: root.display_name
+                font_name: "screens/fonts/Valekon.otf"
                 halign: 'center'
                 font_size: 30
-                color: 0, 0, 0, 1
+                color: primary_color
                 size_hint_y: None
                 height: 40
 
@@ -101,7 +95,7 @@
                 padding: [40, 20, 40, 20]
                 canvas.before:
                     Color:
-                        rgba: 0.9, 0.9, 0.9, 1
+                        rgba: primary_color
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
@@ -120,7 +114,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: secondary_color
                         size_hint_y: None
                         height: 30
 
@@ -130,7 +124,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: light_color
                         size_hint_y: None
                         height: 30
 
@@ -141,7 +135,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: secondary_color
                         size_hint_y: None
                         height: 30
 
@@ -151,7 +145,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: light_color
                         size_hint_y: None
                         height: 30
 
@@ -162,7 +156,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: secondary_color
                         size_hint_y: None
                         height: 30
 
@@ -172,7 +166,7 @@
                         valign: 'middle'
                         text_size: self.size
                         font_size: 20
-                        color: 0, 0, 0, 1
+                        color: light_color
                         size_hint_y: None
                         height: 30
 
@@ -184,11 +178,11 @@
 
                 Label:
                     text: "My Likes"
-                    bold: True
+                    font_name: "screens/fonts/Valekon.otf"
                     font_size: 25
                     size_hint_y: None
                     height: 40
-                    color: 0.2, 0.2, 0.2, 1
+                    color: secondary_color
                 
                 Label:
                     text: ""
@@ -202,9 +196,10 @@
                     height: self.minimum_height
                     padding: [20, 10]
                     spacing: 6
+                    color: dark_color
                     canvas.before:
                         Color:
-                            rgba: 0.2, 0.2, 0.2, 1    # dark gray
+                            rgba: super_light
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
@@ -218,11 +213,11 @@
 
                 Label:
                     text: "My Dislikes"
-                    bold: True
                     font_size: 25
+                    font_name: "screens/fonts/Valekon.otf"
                     size_hint_y: None
                     height: 40
-                    color: 0.2, 0.2, 0.2, 1
+                    color: secondary_color
                 
                 Label:
                     text: ""
@@ -236,9 +231,10 @@
                     height: self.minimum_height
                     padding: [20, 10]
                     spacing: 6
+                    color: dark_color
                     canvas.before:
                         Color:
-                            rgba: 0.2, 0.2, 0.2, 1
+                            rgba: super_light
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
@@ -252,11 +248,11 @@
 
                 Label:
                     text: "My Goals"
-                    bold: True
+                    font_name: "screens/fonts/Valekon.otf"
                     font_size: 25
                     size_hint_y: None
                     height: 40
-                    color: 0.2, 0.2, 0.2, 1
+                    color: secondary_color
 
                 Label:
                     text: ""
@@ -270,10 +266,17 @@
                     height: self.minimum_height
                     padding: [20, 10]
                     spacing: 6
+                    color: dark_color
                     canvas.before:
                         Color:
-                            rgba: 0.2, 0.2, 0.2, 1
+                            rgba: super_light
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
                             radius: [dp(8), dp(8), dp(8), dp(8)]
+
+<ImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)

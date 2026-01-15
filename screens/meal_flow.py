@@ -35,6 +35,12 @@ from typing import Dict, List, Any
 from datetime import datetime, timezone
 from kivy.logger import Logger
 
+hash_meal_final = {
+
+}
+
+loading_screen = False
+
 class PortionSizeBeforePage(Screen):
     pass
 
@@ -220,7 +226,9 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
 
         for food in ingredients:
             row = BoxLayout(size_hint_y=None, height=40, padding=[10, 5])
-            cb = CheckBox(size_hint_x=None, width=30, group=None)
+            # if colored checkbox do not work use this one and delete the lower code
+            # cb = CheckBox(size_hint_x=None, width=30, group=None)
+            cb = ColoredCheckBox(size_hint_x=None, width=30, group=None)
             label = Label(text=food.capitalize(), color=[0, 0, 0, 1], halign='left', valign='middle')
             label.bind(size=label.setter('text_size'))
             row.add_widget(cb)
@@ -264,15 +272,15 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             not_finished = [s.strip() for s in not_finished]
 
             # update CURRENT_MEAL fields
-            now = datetime.now()
-            if not CURRENT_MEAL.get("date"):
-                CURRENT_MEAL["date"] = now.strftime("%B %d, %Y")
-            if not CURRENT_MEAL.get("start_time"):
-                CURRENT_MEAL["start_time"] = now.strftime("%I:%M %p").lstrip("0")
-            if not CURRENT_MEAL.get("end_time"):
-                CURRENT_MEAL["end_time"] = now.strftime("%I:%M %p").lstrip("0")
+            # now = datetime.now()
+            # if not CURRENT_MEAL.get("date"):
+            #     CURRENT_MEAL["date"] = now.strftime("%B %d, %Y")
+            # if not CURRENT_MEAL.get("start_time"):
+            #     CURRENT_MEAL["start_time"] = now.strftime("%I:%M %p").lstrip("0")
+            # if not CURRENT_MEAL.get("end_time"):
+            #     CURRENT_MEAL["end_time"] = now.strftime("%I:%M %p").lstrip("0")
 
-            # food arrays: before / after / not finished
+            # # food arrays: before / after / not finished
             CURRENT_MEAL["food_before_meal"] = CURRENT_MEAL.get("food_before_meal", []) or []
             # food_after_meal should be the items NOT checked (leftover / after-meal)
             CURRENT_MEAL["food_after_meal"] = not_finished or []
@@ -280,19 +288,30 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             CURRENT_MEAL["food_not_finished"] = not_finished or []
             CURRENT_MEAL["food_finished"] = finished or []
 
-            # dummy portions (if not set)
-            if not CURRENT_MEAL.get("portion_before_image"):
-                CURRENT_MEAL["portion_before_image"] = "assets/portion_before_dummy.jpg"
-            if not CURRENT_MEAL.get("portion_after_image"):
-                CURRENT_MEAL["portion_after_image"] = "assets/portion_after_dummy.jpg"
+            # # dummy portions (if not set)
+            # if not CURRENT_MEAL.get("portion_before_image"):
+            #     CURRENT_MEAL["portion_before_image"] = "assets/portion_before_dummy.jpg"
+            # if not CURRENT_MEAL.get("portion_after_image"):
+            #     CURRENT_MEAL["portion_after_image"] = "assets/portion_after_dummy.jpg"
 
-            # keep existing LLM-generated summary/suggestions if present, otherwise fallback
-            if not CURRENT_MEAL.get("summary"):
-                CURRENT_MEAL["summary"] = "Auto-generated summary (dummy)."
-            if not CURRENT_MEAL.get("conversation_suggestions"):
-                CURRENT_MEAL["conversation_suggestions"] = ["Try asking about colors.", "Praise effort."]
-            if not CURRENT_MEAL.get("ingredient_suggestions"):
-                CURRENT_MEAL["ingredient_suggestions"] = ["Carrots - good source of beta-carotene."]
+            # # keep existing LLM-generated summary/suggestions if present, otherwise fallback
+            # if not CURRENT_MEAL.get("summary"):
+            #     CURRENT_MEAL["summary"] = "Auto-generated summary (dummy)."
+            # if not CURRENT_MEAL.get("conversation_suggestions"):
+            #     CURRENT_MEAL["conversation_suggestions"] = ["Try asking about colors.", "Praise effort."]
+            # if not CURRENT_MEAL.get("ingredient_suggestions"):
+            #     CURRENT_MEAL["ingredient_suggestions"] = ["Carrots - good source of beta-carotene."]
+            global hash_meal_final
+
+            CURRENT_MEAL["start_time"] = hash_meal_final['start_time']
+            CURRENT_MEAL["end_time"] = hash_meal_final['end_time']
+            CURRENT_MEAL["date"] = hash_meal_final['date']
+            CURRENT_MEAL["transcript"] = hash_meal_final['transcript']
+            CURRENT_MEAL["conversation_suggestions"] = hash_meal_final['conversation_suggestions']
+            CURRENT_MEAL["summary"] = hash_meal_final['summary']
+            CURRENT_MEAL["ingredient_suggestions"] = hash_meal_final['ingredient_suggestions']
+            CURRENT_MEAL["portion_before_image"] = hash_meal_final['portion_before_image']
+            CURRENT_MEAL["portion_after_image"] = hash_meal_final['portion_after_image']
 
             # ensure _id exists before insert
             if not CURRENT_MEAL.get("_id"):
@@ -317,13 +336,16 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             try:
                 result = meals_col.insert_one(CURRENT_MEAL)
                 inserted_id = str(result.inserted_id)
-                print("✅ Inserted meal:", inserted_id)
+                Logger.info(f"Inserted meal: {inserted_id}")
                 meal_doc = CURRENT_MEAL.copy()
                 meal_doc["_id"] = inserted_id
-                # ensure inserted doc contains user_id
-                meal_doc["user_id"] = meal_doc.get("user_id", CURRENT_MEAL.get("user_id"))
+                # ensure inserted doc contains user_id (string)
+                if meal_doc.get("user_id") is not None:
+                    meal_doc["user_id"] = str(meal_doc["user_id"])
+                else:
+                    meal_doc["user_id"] = CURRENT_MEAL.get("user_id")
             except Exception as e:
-                print("❌ failed to insert meal to MongoDB:", e)
+                Logger.info("failed to insert meal to MongoDB: %s", e)
                 if not CURRENT_MEAL.get("_id"):
                     CURRENT_MEAL["_id"] = str(uuid.uuid4())
                 meal_doc = CURRENT_MEAL.copy()
@@ -382,8 +404,7 @@ ANALYSIS_PROMPT = """
             """
 
 SUMMARY_PROMPT = """
-            Using all of the context above create a 5 sentence summary of what happened during the meal.
-            """
+            Using all of the context above create a 5 sentence summary of what happened during the meal. DO NOT COPY OTHER FORMATTING MENTIONED ABOVE. (DO NOT MAKE UP STORIES)"""
 
 class SessionPage(Screen):
     def __init__(self, **kwargs):
@@ -438,12 +459,12 @@ class SessionPage(Screen):
         try:
             # choose priority: first known emotion, fallback to neutral
             fname_map = {
-                "neutral": "neutral.png",
-                "happy": "happy.jpg",
-                "excited": "excited.jpg",
-                "sad": "sad.jpg"
+                "neutral": "neutral.PNG",
+                "happy": "happy.PNG",
+                "excited": "excited.PNG",
+                "sad": "sad.PNG"
             }
-            picked = "neutral.png"
+            picked = "neutral.PNG"
             if emotions:
                 for e in emotions:
                     if not e:
@@ -466,20 +487,33 @@ class SessionPage(Screen):
             Logger.info("Kabu: update_emotion_image error: %s", e)
 
     def end_session(self, *args):
-        """Called by End Session button: stop worker and navigate to portionSizeAfter."""
+        """Called by End Session button: stop worker and navigate to session."""
         try:
             Logger.info("Kabu: end_session pressed - stopping session")
             self.stop_session()
         except Exception as e:
             Logger.info("Kabu: end_session stop error: %s", e)
         try:
-            App.get_running_app().root.current = "portionSizeAfter"
+            App.get_running_app().root.current = "inputIngredientsAM"
         except Exception as e:
             Logger.info("Kabu: end_session nav error: %s", e)
+    
+    def fmt_time(self,dt):
+                    try:
+                        return dt.strftime("%I:%M %p").lstrip("0")
+                    except Exception:
+                        return datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
+
+    def fmt_date(self, dt):
+        try:
+            s = dt.strftime("%B %d, %Y")
+            return s.replace(" 0", " ")
+        except Exception:
+            return datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " ")
 
     def _run_session_loop(self):
         Logger.info("Kabu: _run_session_loop starting")
-        start = datetime.now(timezone.utc)
+        start = self.fmt_time(datetime.now)
         try:
             # keep original initialization (unchanged) but log key steps
             Logger.info("Kabu: loading child_data")
@@ -533,12 +567,14 @@ class SessionPage(Screen):
 
             FORMAT YOUR REPONSE AS BELOW (EVERY REPLY SHOULD HAVE THIS FORMAT THIS IS A NON NEGOTIABLE):
             Kabu: <your response here>
-            Kabu_emotion: [Excited, Happy, Neutral, Sad] (Note: EMOTIONS SHOULD ONLY BE FROM THIS LIST: Excited, Happy, Neutral, Sad. Do not create new emotions outside of this list.)
+            Kabu_emotion: [Excited, Happy, Neutral, Sad] (Note: EMOTIONS SHOULD ONLY BE FROM THIS LIST: Excited, Happy, Neutral, Sad. Do not create new emotions outside of this list. As much as possible try to switch emotions. If you're concerned then display sad)
+            Topic Mentioned: <One word to descibe the topic.>
 
             FOLLOW THIS EXACT FORMAT IN EVERY RESPONSE. DO NOT DEVIATE FROM IT.
             Example: 
-            Kabu: I'm having a great time chatting with you while you eat your meal! What is your favorite food to eat?
+            Kabu: I love talking about animals! They are so much fun. Owls are such interesting creatures, don't you think?
             Kabu_emotion: [Happy]
+            Topic Mentioned: Owls
             """ 
 
             Logger.info("Kabu: initializing pipeline")
@@ -658,7 +694,7 @@ class SessionPage(Screen):
                     
                     self.full_transcript.append({"speaker": "kabu", 
                                                  "text": parsed['text'],
-                                                 "timestamp": datetime.now(timezone.utc).isoformat(),
+                                                 "timestamp": self.fmt_time(datetime.now(timezone.utc).isoformat()),
                                                  "emotion": parsed['emotions']})
                     #If you to know what emotion the bot is giving you have to input parsed['emotions']
 
@@ -700,53 +736,36 @@ class SessionPage(Screen):
 
             # summary (best-effort)
             try:
-                end = datetime.now(timezone.utc)
+                end = self.fmt_time(datetime.now)
                 Logger.info("Kabu: requesting summary")
                 summary = llm.get_kabu_response(SUMMARY_PROMPT) or ""
             except Exception as e:
                 Logger.info("Kabu: summary request failed: %s", e)
                 summary = ""
 
-            # build meal document defensively
             try:
+                global loading_screen
+                global hash_meal_final
+                # keep structured types (lists/dicts) as-is so Mongo stores objects, not strings
                 meal_hash = {
-                    "start_time": start.isoformat() if start else datetime.now(timezone.utc).isoformat(),
-                    "end_time": end.isoformat() if 'end' in locals() else datetime.now(timezone.utc).isoformat(),
-                    "date": (start.date().isoformat() if start else datetime.now(timezone.utc).date().isoformat()),
-                    "transcript": self.full_transcript if self.full_transcript else [],
-                    "conversation_suggestions": parsed.get("recommendations", parsed.get("conversation_suggestions", [])),
-                    "ingredient_suggestions": parsed.get("disliked_foods", parsed.get("ingredient_suggestions", [])),
-                    "food_before_meal": CURRENT_MEAL.get("food_before_meal", []),
-                    "food_after_meal": CURRENT_MEAL.get("food_after_meal", []),
-                    "summary": summary or CURRENT_MEAL.get("summary", ""),
+                    "start_time": str(start),
+                    "end_time": str(end),
+                    "date": datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " "),
+                    "transcript": list(self.full_transcript) if getattr(self, "full_transcript", None) else [],
+                    "conversation_suggestions": parsed.get("recommendations", []) if isinstance(parsed, dict) else [],
+                    "ingredient_suggestions": parsed.get("disliked_foods", []) if isinstance(parsed, dict) else [],
+                    "food_after_meal": ["Placeholder food"],
+                    "summary": summary,
+                    "portion_before_image": "assets/portion_before_dummy.jpg",
+                    "portion_after_image": "assets/portion_after_dummy.jpg",
                 }
-                # attach user id if available (prefer CURRENT_MEAL then app.current_user)
-                try:
-                    meal_hash["user_id"] = CURRENT_MEAL.get("user_id") or (str(getattr(App.get_running_app(), "current_user", {}).get("user_id", "")) if isinstance(getattr(App.get_running_app(), "current_user", None), dict) else None)
-                except Exception:
-                    meal_hash["user_id"] = CURRENT_MEAL.get("user_id")
+                loading_screen = True
+                hash_meal_final = meal_hash
+                # log a concise preview (avoid passing extra args to Logger.info)
+                Logger.info(f"Kabu: built hash_meal_final preview -> summary: {summary}")
             except Exception as e:
-                Logger.info("Kabu: failed to build meal_hash: %s", e)
-                meal_hash = {
-                    "start_time": datetime.now(timezone.utc).isoformat(),
-                    "end_time": datetime.now(timezone.utc).isoformat(),
-                    "date": datetime.now(timezone.utc).date().isoformat(),
-                    "transcript": self.full_transcript or [],
-                    "conversation_suggestions": [],
-                    "ingredient_suggestions": [],
-                    "food_before_meal": CURRENT_MEAL.get("food_before_meal", []),
-                    "food_after_meal": CURRENT_MEAL.get("food_after_meal", []),
-                    "summary": summary or "",
-                }
-
-            # insert meal (best-effort)
-            try:
-                meal_id = mongodb.insert_meal(meal_hash)
-                Logger.info("Meal data saved with meal_id: %s", meal_id)
-            except Exception as e:
-                Logger.info("Kabu: failed to insert meal: %s", e)
-
-            # always attempt to release camera
+                Logger.info("Kabu: meal_hash build error: %s", e)
+                meal_hash = {}
             try:
                 if self.camera and hasattr(self.camera, "isOpened") and self.camera.isOpened():
                     self.camera.release()
@@ -755,3 +774,53 @@ class SessionPage(Screen):
                 Logger.info("Kabu: camera release finally error: %s", e)
 
             Logger.info("Kabu: _run_session_loop exited")
+
+from kivy.graphics import Color, Rectangle
+from colors import ACCENT_COLOR, LIGHT_COLOR
+
+class ColoredCheckBox(CheckBox):
+    """CheckBox with a colored square background that stays square and reacts to `active`."""
+    def __init__(self, **kwargs):
+        # ensure explicit sizing so width/height are available during init
+        if 'size_hint' not in kwargs and 'size' not in kwargs:
+            kwargs.setdefault('size_hint', (None, None))
+            kwargs.setdefault('size', (dp(24), dp(24)))
+        elif 'size' in kwargs and ('size_hint' not in kwargs):
+            kwargs.setdefault('size_hint', (None, None))
+ 
+        super().__init__(**kwargs)
+ 
+        # safe initial bg (use fallback dp size if width/height not set yet)
+        init_w = self.width if (self.width and self.width > 0) else dp(24)
+        init_h = self.height if (self.height and self.height > 0) else dp(24)
+ 
+        with self.canvas.before:
+            self._bg_color = Color(*(ACCENT_COLOR if self.active else LIGHT_COLOR))
+            # draw rectangle; we'll resize/center it in _update_graphics
+            self._bg = Rectangle(pos=self.pos, size=(init_w, init_h))
+ 
+        # bind updates
+        self.bind(pos=self._update_graphics, size=self._update_graphics, active=self._on_active_changed)
+ 
+        # ensure initial geometry is correct
+        Clock.schedule_once(lambda dt: self._update_graphics(), 0)
+ 
+    def _update_graphics(self, *a):
+        try:
+            w = self.width if self.width and self.width > 0 else dp(24)
+            h = self.height if self.height and self.height > 0 else dp(24)
+            box_size = min(w, h)
+            # center the square inside the widget bounds
+            x = self.x + (w - box_size) / 2
+            y = self.y + (h - box_size) / 2
+            self._bg.pos = (x, y)
+            self._bg.size = (box_size, box_size)
+        except Exception:
+            pass
+ 
+    def _on_active_changed(self, inst, value):
+        try:
+            self._bg_color.rgba = ACCENT_COLOR if value else LIGHT_COLOR
+        except Exception:
+            pass
+

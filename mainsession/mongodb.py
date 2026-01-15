@@ -1,10 +1,11 @@
 import os
 import certifi
+import uuid
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import ReturnDocument
 
-uri = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
+uri = os.getenv("MONGODB_URI", "mmongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/?appName=Cluster0")
 
 client = MongoClient(
     uri,
@@ -32,14 +33,13 @@ def _format_numeric_id(seq: int, width: int = 4) -> str:
     return f"{seq:0{width}d}"
 
 def insert_meal(meal_doc: dict, width: int = 4) -> str:
-    """
-    Atomically assign numeric meal_id like '0001', insert document, return meal_id.
-    """
-    seq = _get_next_sequence("meal")
-    meal_id = _format_numeric_id(seq, width=width)
-    meal_doc.setdefault("meal_id", meal_id)
+    if meal_doc.get("_id"):
+        meal_doc["_id"] = str(meal_doc["_id"])
+    else:
+        meal_doc["_id"] = str(uuid.uuid4())
+
     meals_col.insert_one(meal_doc)
-    return meal_id
+    return str(meal_doc["_id"])
 
 def insert_child(child_doc: dict, width: int = 4) -> str:
     seq = _get_next_sequence("child")
@@ -47,6 +47,13 @@ def insert_child(child_doc: dict, width: int = 4) -> str:
     child_doc.setdefault("user_id", user_id)
     children_col.insert_one(child_doc)
     return user_id
+
+def find_meal(meal_id: str) -> dict | None:
+    try:
+        meal_document = meals_col.find_one({"_id": meal_id})
+        return meal_document
+    except ValueError:
+        return None
 
 def init_counter(name: str, start: int = 0) -> None:
     counters_col.update_one({"_id": name}, {"$setOnInsert": {"seq": int(start)}}, upsert=True)

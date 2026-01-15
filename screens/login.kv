@@ -39,19 +39,18 @@
                 spacing: 10
                 padding: [0, 0, 0, 10]
 
-                Widget:
-                    size_hint_x: None
-                    width: 10
-                    canvas:
-                        Color:
-                            rgba: accent_color
-                        Ellipse:
-                            pos: self.center_x - 5, self.center_y - 5
-                            size: 10, 10
+                Image:
+                    source: "screens/icons/user.PNG" 
+                    size_hint: None, None
+                    size: 50, 50
+                    pos_hint: {"center_x": 0.50, "center_y": 0.45}
+                    allow_stretch: True
+                    keep_ratio: True
 
                 Label:
                     text: "User Login"
-                    font_size: 24
+                    font_size: 35
+                    font_name: "screens/fonts/Valekon.otf"
                     color: dark_color
                     halign: "left"
                     valign: "middle"
@@ -99,6 +98,8 @@
             # Login button
             Button:
                 text: "Login"
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 22
                 background_normal: ""
                 background_color: accent_color
                 color: primary_color  # text color
@@ -111,6 +112,8 @@
                 text: "Create an Account"
                 background_normal: ""
                 background_color: primary_color
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 22
                 color: dark_color
                 size_hint_y: None
                 height: 50

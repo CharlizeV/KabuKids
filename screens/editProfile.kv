@@ -20,40 +20,26 @@
             height: 60
 
             # Left square
-            Button:
-                size_hint_x: None
-                width: 40
-                background_color: 0, 0, 0, 0
-                on_release: app.root.current = "profile"
-                canvas.before:
-                    Color:
-                        rgba: 0.2, 0.6, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            ImageButton:
+                source: "screens/icons/return.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_press: app.root.current = "profile"
 
             # Center text
             Label:
                 text: "Edit Profile"
+                font_name: "screens/fonts/Valekon.otf"
                 font_size: 20
-                color: 0, 0, 0, 1
+                color: secondary_color
                 halign: 'center'
                 valign: 'middle'
                 text_size: self.size
 
             # Right square
-            Button:
-                size_hint_x: None
-                width: 40
-                background_color: 0, 0, 0, 0
-                # call save then go back to profile
-                on_release: app.root.current = "login"
-                canvas.before:
-                    Color:
-                        rgba: 0.8, 0.3, 0.3, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            ImageButton:
+                source: "screens/icons/logout.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_press: app.root.current = "login"
 
         # Content area - This will now expand to fill remaining space
         ScrollView:
@@ -314,3 +300,9 @@
                 Widget:
                     size_hint_y: None
                     height: 50  # Fixed height for footer space
+
+<ImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)

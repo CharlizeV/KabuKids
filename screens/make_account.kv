@@ -31,7 +31,8 @@
 
             Label:
                 text: "Create Profile for Child"
-                font_size: 24
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 35
                 color: dark_color
                 size_hint_y: None
                 height: 40
@@ -118,7 +119,7 @@
                             text_size: self.width, None
                         TextInput:
                             id: username_input
-                            hint_text: "Enter your name"
+                            hint_text: "Enter your username"
                             multiline: False
                             size_hint_y: None
                             height: 40
@@ -292,6 +293,8 @@
                     # SAVE BUTTON
                     Button:
                         text: "Save Profile"
+                        font_name: "screens/fonts/Valekon.otf"
+                        font_size: 25
                         background_normal: ""
                         background_color: accent_color
                         color: primary_color

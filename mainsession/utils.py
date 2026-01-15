@@ -162,6 +162,7 @@ def parse_kabu_reply_final(text: str) -> Dict[str, Any]:
         "raw": text,
     }
 
+
 def time_format(start_dt):
     time_now = datetime.now(timezone.utc) - start_dt
     total = int(time_now.total_seconds())

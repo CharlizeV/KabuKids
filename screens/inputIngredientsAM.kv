@@ -1,9 +1,17 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import super_light colors.SUPER_LIGHT
+#:import dp kivy.metrics.dp
+
 <InputIngredientsAMPage>:
     name: "inputIngredientsAM"
 
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1  # White background
+            rgba: primary_color
         Rectangle:
             pos: self.pos
             size: self.size
@@ -22,8 +30,9 @@
 
             Label:
                 text: "Input Food After Meal"
-                font_size: 20
-                color: 0, 0, 0, 1
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 28
+                color: secondary_color
                 halign: 'center'
                 valign: 'middle'
                 text_size: self.size
@@ -31,8 +40,9 @@
         # --- Instruction Label ---
         Label:
             text: "Check the boxes of the food the child has finished."
+            font_name: "screens/fonts/Valekon.otf"
             font_size: 16
-            color: 0, 0, 0, 1
+            color:light_color
             halign: 'center'
             valign: 'middle'
             text_size: self.size
@@ -53,9 +63,10 @@
         # --- FINISH BUTTON (saves the meal to DB) ---
         Button:
             text: "Finish Meal"
+            font_name: "screens/fonts/Valekon.otf"
             size_hint_y: None
             height: dp(56)
             background_normal: ''
-            background_color: 0.2, 0.6, 1, 1
-            color: 1, 1, 1, 1
+            background_color: accent_color
+            color: primary_color
             on_press: root.finish_meal()

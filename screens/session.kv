@@ -1,8 +1,10 @@
+#:import secondary_color colors.SECONDARY_COLOR
+
 <SessionPage>:
     name: "session"
     canvas.before:
         Color:
-            rgba: 0, 0, 0, 1
+            rgba: secondary_color
         Rectangle:
             pos: self.pos
             size: self.size

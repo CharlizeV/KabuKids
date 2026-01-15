@@ -1,9 +1,14 @@
 # Kivy normalized RGBA format: (R, G, B, A) where R, G, B, A are between 0.0 and 1.0
 
-PRIMARY_COLOR = (0.949, 0.910, 0.812, 1.0) #cream white
-SECONDARY_COLOR = (0.416, 0.600, 0.306, 1.0) #dark green
-ACCENT_COLOR = (0.957, 0.635, 0.380, 1.0) #orange
+#RGBA converter
+def rgba_from_255(r, g, b, a=255):
+    return (r / 255.0, g / 255.0, b / 255.0, a / 255.0)
 
-DARK_COLOR = (0.553, 0.416, 0.294, 1.0) #dark brown
-LIGHT_COLOR = (0.655, 0.788, 0.341, 1.0) #light green
+PRIMARY_COLOR = rgba_from_255(255, 255, 255, 255) # white
+SECONDARY_COLOR = rgba_from_255(25, 110, 59, 255) #dark green
+ACCENT_COLOR = rgba_from_255(254, 188, 65, 255) #yellow
 
+SUPER_LIGHT = rgba_from_255(151, 181, 118, 255) #very light gray
+
+DARK_COLOR = rgba_from_255(141, 106, 75, 255) #dark brown
+LIGHT_COLOR = rgba_from_255(95, 134, 53, 255) #light green

@@ -1,3 +1,4 @@
+from kivy.logger import Logger
 from kivy.uix.screenmanager import Screen
 from kivy.uix.label import Label
 from kivy.clock import Clock
@@ -18,10 +19,17 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from bson.objectid import ObjectId
+from mainsession import mongodb
 
 # Fallback color constants if not defined elsewhere in the project
-DARK_COLOR = (0, 0, 0, 1)
-SECONDARY_COLOR = (0.2, 0.2, 0.2, 1)
+from colors import DARK_COLOR, LIGHT_COLOR, ACCENT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR, SUPER_LIGHT
+
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.image import Image
+
+# simple tappable image widget
+class ImageButton(ButtonBehavior, Image):
+    pass
 
 class DashboardPage(Screen):
     _reports_loaded = False
@@ -205,15 +213,33 @@ class ReportPage(Screen):
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
-        meal_id = app.selected_meal_id
-
+        try:
+            meal_id = app.selected_meal_id
+            Logger.info(f"ReportPage: on_pre_enter meal_id={meal_id}")
+        except Exception as e:
+            Logger.info(f"ReportPage: on_pre_enter error getting meal_id: {e}")
+            meal_id = None
         if not meal_id or meal_id not in SAMPLE_REPORTS:
             # Fallback or error handling
             self.date = "N/A"
             self.summary_text = "Report not found."
             return
-
-        data = SAMPLE_REPORTS[meal_id]
+        
+        data = mongodb.find_meal(meal_id)
+        Logger.info(data)
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
+        Logger.info("Here")
 
         # Date & time
         self.date = data["date"]
@@ -226,9 +252,9 @@ class ReportPage(Screen):
         self.food_before_text = "\n".join([f"• {food}" for food in data["food_before_meal"]])
         self.food_not_finished_text = "\n".join([f"• {food}" for food in data["food_not_finished"]]) if data["food_not_finished"] else "• None"
 
-        # Images
-        self.portion_before_source = data["portion_before_image"]
-        self.portion_after_source = data["portion_after_image"]
+        # # Images
+        # self.portion_before_source = data["portion_before_image"]
+        # self.portion_after_source = data["portion_after_image"]
 
         # Suggestions (with real newlines)
         self.formatted_ingredient_suggestions = "\n".join([f"• {s}" for s in data["ingredient_suggestions"]])
@@ -262,7 +288,7 @@ class TranscriptPage(Screen):
 
         report = SAMPLE_REPORTS.get(meal_id, {})
         for msg in report.get("transcript", []):
-            role = msg["role"]
+            role = msg["speaker"]
             text = msg["text"]
             emotion = msg.get("emotion", "neutral")
 
@@ -289,7 +315,7 @@ class TranscriptPage(Screen):
             else:
                 time_str = str(time_val) if time_val else ""
 
-            speaker_text = ("Kabu" if role == "Kabu" else "Name")
+            speaker_text = ("Kabu" if role == "kabu" else "Child")
             if time_str:
                 speaker_text = f"{speaker_text} ({time_str}):"
             else:
@@ -316,8 +342,8 @@ class TranscriptPage(Screen):
              # Emotion label
             emotion_label = Label(
                 text=f"[{emotion}]",
+                color=LIGHT_COLOR,
                 font_size='12sp',
-                color=(0.4, 0.4, 0.4, 1),
                 halign='left',
                 valign='top',
                 size_hint_x=1,
@@ -347,17 +373,18 @@ class TranscriptPage(Screen):
  
             # add header (speaker + optional dislike button), emotion, message
             # place dislike button into header_row so it aligns with speaker/time
-            if role == "Kabu":
-                # pass the exact message text into the popup handler so it can be saved with the reason
-                dislike_btn = Button(
+            if role == "kabu":
+                dislike_btn = ImageButton(
+                    source="screens/icons/dislike.png",
                     size_hint_x=None,
-                    width=dp(24),
-                    height=dp(18),
-                    background_normal='',
-                    background_color=(1, 0, 0, 1)
+                    size_hint_y=0.4,
+                    width=dp(15),
+                    height=dp(15),
+                    allow_stretch=True,
+                    keep_ratio=True
                 )
                 dislike_btn.bind(on_press=lambda inst, m=text: self.open_dislike_popup(m))
-                # add button immediately after label (left side)
+                # add image-button immediately after label (left side)
                 header_row.add_widget(dislike_btn)
             # spacer to push nothing to the right (keeps left alignment)
             header_row.add_widget(BoxLayout())

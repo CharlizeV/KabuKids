@@ -19,23 +19,25 @@
         orientation: "vertical"
         size: root.width, root.height
         padding: 200
-        spacing: -50
+        spacing: 10
 
         Label:
-            text: "Welcome to"
+            text: "W e l c o m e   t o"
+            font_name: "screens/fonts/Valekon.otf"
             font_size: 40
             color: primary_color
         
-        Widget:
-            height: 150
-            canvas:
-                Color:
-                    rgba: accent_color
-                Ellipse:
-                    pos: self.center_x - 50, self.center_y - 50
-                    size: 100, 100  # diameter = 100
+        Image:
+            source: "screens/icons/logo.PNG" 
+            size_hint: None, None
+            size: 400, 400
+            pos_hint: {"center_x": 0.52}
+            allow_stretch: True
+            keep_ratio: True
+
         Label:
-            text: "Kaibu Kids!"
+            text: "K a i b u   K i d s !"
+            font_name: "screens/fonts/Valekon.otf"
             font_size: 40
             color: primary_color
             

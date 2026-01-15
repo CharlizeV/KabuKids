@@ -23,11 +23,6 @@ from pymongo.server_api import ServerApi
 from kivy.core.window import Window
 from kivy.utils import platform
 from kivy.uix.stencilview import StencilView
-
-import uuid
-from datetime import datetime
-
-from kivy.core.window import Window
 from kivy.uix.image import Image
 
 import uuid
@@ -40,7 +35,6 @@ except ImportError:
     pass
 
 import sys
-import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
 from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1

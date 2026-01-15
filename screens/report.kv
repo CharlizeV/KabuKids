@@ -1,5 +1,21 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import super_light colors.SUPER_LIGHT
+#:import dp kivy.metrics.dp
+
+
 <ReportPage>:
     name: "report"
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     ScrollView:
         BoxLayout:
             orientation: 'vertical'
@@ -16,23 +32,23 @@
 
                 Label:
                     text: "REPORT"
-                    font_size: '28sp'
+                    font_name: "screens/fonts/Valekon.otf"
+                    color: secondary_color
+                    font_size: 35
                     bold: True
                     halign: 'left'
                     valign: 'middle'
                     text_size: self.size
 
-                Button:
-                    size_hint_x: None
-                    width: 50
-                    background_normal: ''
-                    background_color: 0.2, 0.6, 1, 1
+                ImageButton:
+                    source: "screens/icons/dashboard.png"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.5}
                     on_press: app.root.current = "dashboard"
-
 
             # --- Date & Time ---
             Label:
                 text: root.date
+                color: light_color
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -42,6 +58,7 @@
 
             Label:
                 text: root.time_range
+                color: light_color
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -54,8 +71,8 @@
                 size_hint_y: None
                 height: 2
                 canvas:
-                    Color:
-                        rgba: 0.7, 0.7, 0.7, 1
+                    Color: 
+                        rgba: secondary_color
                     Rectangle:
                         pos: (self.parent.x + self.parent.width * 0.005, self.y)
                         size: (self.parent.width * 0.99, 2)
@@ -63,7 +80,9 @@
             # --- SUMMARY Header ---
             Label:
                 text: "SUMMARY"
-                font_size: '22sp'
+                color: secondary_color
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 28
                 bold: True
                 halign: 'left'
                 valign: 'top'
@@ -74,6 +93,7 @@
             # --- SUMMARY Content ---
             Label:
                 text: root.summary_text
+                color: light_color
                 font_size: '16sp'
                 halign: 'left'
                 valign: 'top'
@@ -87,7 +107,7 @@
                 height: 2
                 canvas:
                     Color:
-                        rgba: 0.7, 0.7, 0.7, 1
+                        rgba: secondary_color
                     Rectangle:
                         pos: (self.parent.x + self.parent.width * 0.005, self.y)
                         size: (self.parent.width * 0.99, 2)
@@ -95,7 +115,9 @@
             # --- FOOD BEFORE MEAL ---
             Label:
                 text: "FOOD BEFORE MEAL"
-                font_size: '22sp'
+                font_size: 28
+                font_name: "screens/fonts/Valekon.otf"
+                color: secondary_color
                 bold: True
                 halign: 'left'
                 valign: 'top'
@@ -105,7 +127,8 @@
 
             Label:
                 text: root.food_before_text
-                font_size: '16sp'
+                font_size: 20
+                color: light_color
                 halign: 'left'
                 valign: 'top'
                 text_size: self.width, None
@@ -115,7 +138,9 @@
             # --- FOOD NOT FINISHED ---
             Label:
                 text: "FOOD NOT FINISHED"
-                font_size: '22sp'
+                font_name: "screens/fonts/Valekon.otf"
+                color: secondary_color
+                font_size: 28
                 bold: True
                 halign: 'left'
                 valign: 'top'
@@ -125,7 +150,8 @@
 
             Label:
                 text: root.food_not_finished_text
-                font_size: '16sp'
+                color: light_color
+                font_size: 20
                 halign: 'left'
                 valign: 'top'
                 text_size: self.width, None
@@ -133,31 +159,31 @@
                 height: self.texture_size[1]
 
             # --- Portion Images ---
-            Label:
-                text: "PORTION IMAGES"
-                font_size: '22sp'
-                bold: True
-                halign: 'left'
-                valign: 'top'
-                text_size: self.width, None
-                size_hint_y: None
-                height: self.texture_size[1]
+            #Label:
+            #    text: "PORTION IMAGES"
+            #    font_size: '22sp'
+            #    bold: True
+            #    halign: 'left'
+            #    valign: 'top'
+            #    text_size: self.width, None
+            #    size_hint_y: None
+            #    height: self.texture_size[1]
 
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: None
-                height: 200
-                spacing: 10
+            #BoxLayout:
+            #    orientation: 'horizontal'
+            #    size_hint_y: None
+            #    height: 200
+            #    spacing: 10
 
-                Image:
-                    source: root.portion_before_source
-                    fit_mode: "contain"
-                    allow_stretch: True
+            #    Image:
+            #        source: root.portion_before_source
+            #        fit_mode: "contain"
+            #        allow_stretch: True
 
-                Image:
-                    source: root.portion_after_source
-                    fit_mode: "contain"
-                    allow_stretch: True
+            #    Image:
+            #        source: root.portion_after_source
+            #        fit_mode: "contain"
+            #        allow_stretch: True
 
             # --- Divider ---
             Widget:
@@ -165,7 +191,7 @@
                 height: 2
                 canvas:
                     Color:
-                        rgba: 0.7, 0.7, 0.7, 1
+                        rgba: secondary_color
                     Rectangle:
                         pos: (self.parent.x + self.parent.width * 0.005, self.y)
                         size: (self.parent.width * 0.99, 2)
@@ -173,7 +199,9 @@
             # --- INGREDIENT SUGGESTIONS Header ---
             Label:
                 text: "INGREDIENT SUGGESTIONS"
-                font_size: '22sp'
+                font_name: "screens/fonts/Valekon.otf"
+                color: secondary_color
+                font_size: 28
                 bold: True
                 halign: 'left'
                 valign: 'top'
@@ -187,7 +215,7 @@
                 padding: [15, 15]
                 canvas.before:
                     Color:
-                        rgba: 0.95, 0.95, 0.95, 1
+                        rgba: super_light
                     Line:
                         rectangle: (self.x, self.y, self.width, self.height)
                         width: 1.5
@@ -199,7 +227,8 @@
                     spacing: 12
                     Label:
                         text: root.formatted_ingredient_suggestions
-                        font_size: '16sp'
+                        color: light_color
+                        font_size: 20
                         halign: 'left'
                         valign: 'top'
                         text_size: self.width - 30, None
@@ -212,7 +241,7 @@
                 height: 2
                 canvas:
                     Color:
-                        rgba: 0.7, 0.7, 0.7, 1
+                        rgba:secondary_color
                     Rectangle:
                         pos: (self.parent.x + self.parent.width * 0.005, self.y)
                         size: (self.parent.width * 0.99, 2)
@@ -220,7 +249,9 @@
             # --- CONVERSATION SUGGESTIONS Header ---
             Label:
                 text: "CONVERSATION SUGGESTIONS"
-                font_size: '22sp'
+                font_size: 28
+                font_name: "screens/fonts/Valekon.otf"
+                color: secondary_color
                 bold: True
                 halign: 'left'
                 valign: 'top'
@@ -234,7 +265,7 @@
                 padding: [15, 15]
                 canvas.before:
                     Color:
-                        rgba: 0.95, 0.95, 0.95, 1
+                        rgba: super_light
                     Line:
                         rectangle: (self.x, self.y, self.width, self.height)
                         width: 1.5
@@ -246,7 +277,8 @@
                     spacing: 12
                     Label:
                         text: root.formatted_conversation_suggestions
-                        font_size: '16sp'
+                        font_size: 20
+                        color: light_color
                         halign: 'left'
                         valign: 'top'
                         text_size: self.width - 30, None
@@ -261,17 +293,24 @@
             # --- TRANSCRIPT Button ---
             Button:
                 text: "TRANSCRIPT"
+                font_name: "screens/fonts/Valekon.otf"
                 size_hint_y: None
                 height: 60
-                font_size: '20sp'
+                font_size: 35
                 background_normal: ''
-                background_color: 0.2, 0.6, 1, 1
-                color: 1, 1, 1, 1
+                background_color: accent_color
+                color: primary_color
                 on_press: app.root.current = "transcript"
                 canvas.before:
                     Color:
-                        rgba: 0.2, 0.6, 1, 1
+                        rgba: accent_color
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
                         radius: [20,]
+
+<ImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)

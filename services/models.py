@@ -33,10 +33,6 @@ def clear_current_meal():
     CURRENT_MEAL = {}
 
 def fetch_reports_for_user(user_id: str, callback: Callable[[Dict[str, Any]], None]) -> None:
-    """
-    Query meals_col for the given user_id and call callback(reports_dict).
-    Designed to be safe to run inside a background thread.
-    """
     try:
         if not user_id:
             print("[services.models] fetch_reports_for_user: no user_id passed")

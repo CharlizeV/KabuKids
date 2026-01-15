@@ -1,6 +1,20 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import dp kivy.metrics.dp
+
 <DashboardPage>:
     name: "dashboard"
-    
+
+    canvas.before:
+        Color:
+            rgba: primary_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         orientation: 'vertical'
         
@@ -16,28 +30,31 @@
                 orientation: 'horizontal'
                 spacing: dp(10)
                 
-                Label:
-                    text: ""  
-                    font_size: dp(40)
-                    size_hint_x: None
-                    width: dp(40)
+                Image:
+                    source: "screens/icons/dashboard.png" 
+                    size_hint: None, None
+                    size: 50, 50
+                    pos_hint: {"center_x": 0.50, "center_y": 0.5}
+                    allow_stretch: True
+                    keep_ratio: True
                 
-                # Name and age
+                # Name
                 BoxLayout:
                     orientation: 'vertical'
                     Label:
                         text: root.user_name
-                        font_size: sp(16)
+                        font_name: "screens/fonts/Valekon.otf"
+                        font_size: 30
                         halign: 'left'
                         valign: 'middle'
                         size_hint_y: None
+                        color: secondary_color
                         height: self.texture_size[1]
             
             # Right side: Edit button
-            Button:
-                text: "Edit"
-                size_hint_x: None
-                width: dp(80)
+            ImageButton:
+                source: "screens/icons/profile.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
                 on_press: app.root.current = "profile"
 
         # ====== DIVIDER LINE ======
@@ -46,7 +63,7 @@
             height: dp(2)
             canvas:
                 Color:
-                    rgba: 0.8, 0.8, 0.8, 1  # Light gray
+                    rgba: secondary_color
                 Rectangle:
                     pos: self.pos
                     size: self.width, dp(2)
@@ -64,38 +81,29 @@
                 Button:
                     text: "START MEAL"
                     size_hint_y: None
-                    height: dp(50)
-                    size_hint_x: 0.99  # 90% of parent width
+                    height: dp(60)
+                    size_hint_x: 0.99
                     pos_hint: {'center_x': 0.5}
-                    background_color: 0.2, 0.6, 1, 1  # Blue color
+                    background_normal: ''        # use custom canvas instead of default bg
+                    background_color: 0,0,0,0
                     on_press: app.root.current = "inputIngredientsBM"
-                
-                # TUTORIAL section
-                Label:
-                    text: "TUTORIAL"
                     font_size: sp(18)
-                    size_hint_y: None
-                    height: self.texture_size[1]
-                    halign: 'left'
-                    text_size: self.size
-                
-                # Tutorial placeholder
-                BoxLayout:
-                    size_hint_y: None
-                    height: dp(150)
+                    bold: True
+                    color: 1,1,1,1
                     canvas.before:
                         Color:
-                            rgba: 0.9, 0.9, 0.9, 1  # Light gray
+                            rgba: light_color
                         RoundedRectangle:
                             pos: self.pos
                             size: self.size
-                            radius: [dp(10),]
-                    # Add tutorial content here later
+                            radius: [dp(12), dp(12), dp(12), dp(12)]
                 
                 # PREVIOUS MEALS section
                 Label:
                     text: "PREVIOUS MEALS"
-                    font_size: sp(18)
+                    font_name: "screens/fonts/Valekon.otf"
+                    color: secondary_color
+                    font_size: 30
                     size_hint_y: None
                     height: self.texture_size[1]
                     halign: 'left'
@@ -108,3 +116,9 @@
                     spacing: dp(10)
                     size_hint_y: None
                     height: self.minimum_height
+
+<ImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)

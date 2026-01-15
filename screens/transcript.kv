@@ -1,12 +1,15 @@
-#:import PRIMARY_COLOR colors.PRIMARY_COLOR
-#:import SECONDARY_COLOR colors.SECONDARY_COLOR
-#:import DARK_COLOR colors.DARK_COLOR
+#:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import dp kivy.metrics.dp
 
 <TranscriptPage>:
     name: "transcript"
     canvas.before:
         Color:
-            rgba: PRIMARY_COLOR
+            rgba: primary_color
         Rectangle:
             pos: self.pos
             size: self.size
@@ -23,21 +26,17 @@
 
             Label:
                 text: "Transcript"
-                font_size: '28sp'
+                font_name: "screens/fonts/Valekon.otf"
+                font_size: 35
                 bold: True
-                color: DARK_COLOR
+                color: secondary_color
                 halign: 'left'
                 valign: 'middle'
                 text_size: self.size
 
-            Button:
-                size_hint_x: None
-                width: 50
-                background_normal: ''
-                background_color: 0.7, 0.7, 0.7, 1
-                text: "<"
-                font_size: '24sp'
-                color: DARK_COLOR
+            ImageButton:
+                source: "screens/icons/return.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
                 on_press: app.root.current = "report"
 
         Widget:
@@ -58,3 +57,9 @@
                 size_hint_x: 1
                 height: self.minimum_height
                 spacing: 15
+
+<ImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)

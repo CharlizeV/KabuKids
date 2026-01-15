@@ -9,8 +9,8 @@ from .config import SAMPLE_RATE, PROCESS_TIMEOUT
 try:
     asr_pipeline = pipeline(
         "automatic-speech-recognition",
-        model="openai/whisper-tiny",
-        tokenizer="openai/whisper-tiny",
+        model="openai/whisper-Base",
+        tokenizer="openai/whisper-Base",
         device=-1,
     )
 except Exception:
