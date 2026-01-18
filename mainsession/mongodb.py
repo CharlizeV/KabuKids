@@ -5,7 +5,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import ReturnDocument
 
-uri = os.getenv("MONGODB_URI", "mmongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/?appName=Cluster0")
+uri = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/?appName=Cluster0")
 
 client = MongoClient(
     uri,
