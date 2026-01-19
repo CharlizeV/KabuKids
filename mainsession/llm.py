@@ -1,8 +1,13 @@
 import random
 import time
-import ollama
+from groq import Groq
+import os
 
 from .utils import load_history, save_history, trim_history
+
+# Initialize Groq client (using same API key as STT)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 FALLBACK_QUESTIONS = [
     "What's your favorite thing to eat right now?",
@@ -12,7 +17,11 @@ FALLBACK_QUESTIONS = [
     "If you could eat any yummy thing tonight, what would it be?",
 ]
 
-def get_kabu_response(prompt: str) -> str:
+def get_kabu_response(prompt: str, model: str = "openai/gpt-oss-120b", max_tokens: int = 512) -> str:
+    if client is None:
+        print("ERROR: Groq client not initialized. Check GROQ_API_KEY.")
+        return random.choice(FALLBACK_QUESTIONS)
+    
     messages = load_history()
     # ensure system message present
     if not messages:
@@ -21,17 +30,20 @@ def get_kabu_response(prompt: str) -> str:
     messages.append({"role": "user", "content": prompt})
     messages = trim_history(messages)
 
-    ollama_msgs = [{"role": m["role"], "content": m["content"]} for m in messages]
-
     try:
-        response = ollama.chat(
-            model='qwen2.5:7b',
-            messages=ollama_msgs,
-            options={'temperature': 0.85, 'num_predict': 256}
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_completion_tokens=max_tokens,
+            temperature=0.85,
+            top_p=1,
         )
-        reply = response['message']['content'].strip()
+        reply = completion.choices[0].message.content.strip()
+        
     except Exception as e:
-        print("LLM error:", e)
+        print(f"LLM error: {e}")
+        import traceback
+        traceback.print_exc()
         reply = random.choice(FALLBACK_QUESTIONS)
 
     messages.append({"role": "assistant", "content": reply})

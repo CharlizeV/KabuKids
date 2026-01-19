@@ -8,9 +8,7 @@ import sounddevice as sd
 from .config import SAMPLE_RATE, PROCESS_TIMEOUT
 
 # Check if API key is set
-GROQ_API_KEY = "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"
-if not GROQ_API_KEY:
-    print("WARNING: GROQ_API_KEY environment variable not set!")
+GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
@@ -94,10 +92,6 @@ def get_audio(wait_time: float = 30.0, silence_threshold=0.005, debug=False):
 
 def get_transcribed_audio(audio, timeout: float = None):
     if audio is None or isinstance(audio, str):
-        return None
-    
-    if client is None:
-        print("ERROR: Groq client not initialized. Check GROQ_API_KEY environment variable.")
         return None
     
     # Use a longer timeout for API calls (default 10 seconds instead of 3)

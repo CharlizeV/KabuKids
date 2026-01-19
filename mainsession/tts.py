@@ -1,14 +1,47 @@
-import sounddevice as sd
+import io
+import wave
 import numpy as np
-from kokoro import KPipeline
-from typing import Dict, List, Any
+import sounddevice as sd
+from groq import Groq
 
-def tts_kokoro(pipeline, text):
+GROQ_API_KEY = "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"
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+
+def tts_kokoro(pipeline, text, voice="diana"):
+    if client is None or not text or not text.strip():
+        return
+    
     try:
-        generator = pipeline(text, voice='af_sky')
-        for i, (gs, ps, audio) in enumerate(generator):
-            audio_np = np.asarray(audio, dtype='float32')
-            sd.play(audio_np, samplerate=24000)
-            sd.wait()
+        response = client.audio.speech.create(
+            model="canopylabs/orpheus-v1-english",
+            input=text.strip(),
+            voice=voice,
+            response_format="wav"
+        )
+        
+        # Get audio data and play directly without saving to file
+        audio_data = response.read()
+        
+        # Read WAV file from bytes
+        wav_buffer = io.BytesIO(audio_data)
+        with wave.open(wav_buffer, 'rb') as wav_file:
+            sample_rate = wav_file.getframerate()
+            n_channels = wav_file.getnchannels()
+            audio_bytes = wav_file.readframes(wav_file.getnframes())
+            
+            # Convert to numpy array
+            audio_np = np.frombuffer(audio_bytes, dtype=np.int16)
+            
+            # Convert to float32 and normalize (-1.0 to 1.0)
+            audio_np = audio_np.astype(np.float32) / 32768.0
+            
+            # Handle stereo/mono
+            if n_channels == 2:
+                audio_np = audio_np.reshape(-1, 2)
+            
+            # Play audio (blocks until finished)
+            sd.play(audio_np, samplerate=sample_rate)
+            sd.wait()  # Wait until playback is finished  
+            
     except Exception as e:
-        print("TTS error:", e)
+        print(f"TTS Error: {e}")
