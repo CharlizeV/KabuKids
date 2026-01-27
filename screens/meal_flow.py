@@ -513,7 +513,7 @@ class SessionPage(Screen):
 
     def _run_session_loop(self):
         Logger.info("Kabu: _run_session_loop starting")
-        start = self.fmt_time(datetime.now)
+        start = self.fmt_time(datetime.now())
         try:
             # keep original initialization (unchanged) but log key steps
             Logger.info("Kabu: loading child_data")
@@ -577,16 +577,6 @@ class SessionPage(Screen):
             Topic Mentioned: Owls
             """ 
 
-            Logger.info("Kabu: initializing pipeline")
-            try:
-                pipeline = KPipeline(lang_code='a')
-                self.pipeline = pipeline
-                Logger.info("Kabu: pipeline initialized")
-            except Exception as e:
-                Logger.info("Kabu: pipeline init failed: %s", e)
-                pipeline = None
-                self.pipeline = None
-
             Logger.info("Kabu: opening camera index %s", config.CAMERA_INDEX)
             try:
                 camera = cv2.VideoCapture(config.CAMERA_INDEX)
@@ -614,6 +604,8 @@ class SessionPage(Screen):
                 Logger.info("Kabu: loop iteration start")
                 transcription = [None]
                 emotions = [None]
+                
+                tts.tts_kokoro(f""" Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
 
                 def audio_task():
                     try:
@@ -682,10 +674,6 @@ class SessionPage(Screen):
                         break
                     continue
 
-                # DO NOT update UI here with FER (user) emotion — update from Kabu's parsed emotion below
-                # (keeps display tied to Kabu's chosen emotion)
-
-                # rest of original processing (LLM / TTS / append transcript)
                 try:
                     Logger.info("Kabu: requesting LLM response")
                     reply = llm.get_kabu_response(f"The child said: \"{user_text}\". Observed emotion(s): {emotion_str}.")
@@ -709,7 +697,7 @@ class SessionPage(Screen):
 
                     try:
                         if pipeline:
-                            tts.tts_kokoro(pipeline, parsed['text'])
+                            tts.tts_kokoro( parsed['text'])
                     except Exception as e:
                         Logger.info("Kabu: tts error: %s", e)
                 except Exception as e:
@@ -736,7 +724,7 @@ class SessionPage(Screen):
 
             # summary (best-effort)
             try:
-                end = self.fmt_time(datetime.now)
+                end = self.fmt_time(datetime.now())
                 Logger.info("Kabu: requesting summary")
                 summary = llm.get_kabu_response(SUMMARY_PROMPT) or ""
             except Exception as e:

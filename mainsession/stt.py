@@ -8,7 +8,7 @@ import sounddevice as sd
 from .config import SAMPLE_RATE, PROCESS_TIMEOUT
 
 # Check if API key is set
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
@@ -75,20 +75,6 @@ def get_audio(wait_time: float = 30.0, silence_threshold=0.005, debug=False):
         import traceback
         traceback.print_exc()
         return "NO_SPEECH"
-     
-    # frames = int(wait_time * SAMPLE_RATE)
-    # audio_buf = sd.rec(frames, samplerate=SAMPLE_RATE, channels=1, dtype='float32')
-    # sd.wait()
-    # audio = audio_buf.flatten()
-
-    # # simple energy check (RMS) to decide if speech present
-    # if audio.size == 0:
-    #     return "NO_SPEECH"
-    # rms = float(np.sqrt(np.mean(audio.astype('float64') ** 2)))
-    # if rms < silence_threshold:
-    #     return "NO_SPEECH"
-    # return audio
-
 
 def get_transcribed_audio(audio, timeout: float = None):
     if audio is None or isinstance(audio, str):

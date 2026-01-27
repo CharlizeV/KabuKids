@@ -5,10 +5,10 @@
   },
   {
     "role": "user",
-    "content": "The child said: \"Hi Kabu, can you hear me?\". Observed emotion(s): sad, fear."
+    "content": "The child said: \"Hi, Kabu. How are you doing?\". Observed emotion(s): unknown."
   },
   {
     "role": "assistant",
-    "content": "Kabu: I can definitely hear you! How are you feeling today?\nKabu_emotion: [Neutral]\nTopic Mentioned: Feeling"
+    "content": "Kabu: Hi Charlize! I'm feeling super happy to chat with you. I hope your meal is going great and that the tomato is tasty. Do you have a favorite song playing while you eat? Let me know what you're munching on right now!  \nKabu_emotion: [Happy]  \nTopic Mentioned: food"
   }
 ]

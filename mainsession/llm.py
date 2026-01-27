@@ -6,7 +6,7 @@ import os
 from .utils import load_history, save_history, trim_history
 
 # Initialize Groq client (using same API key as STT)
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 FALLBACK_QUESTIONS = [
