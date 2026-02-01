@@ -5,6 +5,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.video import Video
 from mainsession.config import CAMERA_INDEX
 from services.models import CURRENT_MEAL, init_current_meal, clear_current_meal, SAMPLE_REPORTS
 from db import meals_col
@@ -455,16 +456,16 @@ class SessionPage(Screen):
             Logger.info("Kabu: camera release error: %s", e)
 
     def update_emotion_image(self, emotions: list):
-        """Pick an image from KabuEmotions based on emotions and show it in the center Image."""
+        """Pick a video from KabuEmotions based on emotions and show it in the center Video widget."""
         try:
             # choose priority: first known emotion, fallback to neutral
             fname_map = {
-                "neutral": "neutral.PNG",
-                "happy": "happy.PNG",
-                "excited": "excited.PNG",
-                "sad": "sad.PNG"
+                "neutral": "neutral.mp4",
+                "happy": "happy.mp4",
+                "excited": "excited.mp4",
+                "sad": "sad.mp4"
             }
-            picked = "neutral.PNG"
+            picked = "neutral.mp4"
             if emotions:
                 for e in emotions:
                     if not e:
@@ -473,16 +474,23 @@ class SessionPage(Screen):
                     if key in fname_map:
                         picked = fname_map[key]
                         break
-            img_path = os.path.join(os.path.dirname(__file__), "KabuEmotions", picked)
-            if not os.path.exists(img_path):
+            video_path = os.path.join(os.path.dirname(__file__), "KabuEmotions", picked)
+            if not os.path.exists(video_path):
                 # fallback: try just picked name in project root
-                img_path = picked
+                video_path = picked
             # set source on main thread
             if 'emos_img' in self.ids:
-                self.ids.emos_img.source = img_path
-                # force reload
-                self.ids.emos_img.reload()
-            Logger.info("Kabu: emotion image set -> %s", img_path)
+                video_widget = self.ids.emos_img
+                # Stop current video if playing
+                if video_widget.state == 'play':
+                    video_widget.state = 'stop'
+                # Set the video source
+                video_widget.source = video_path
+                # Set looping option
+                video_widget.options = {'eos': 'loop'}
+                # Start playing the video
+                video_widget.state = 'play'
+            Logger.info("Kabu: emotion video set -> %s", video_path)
         except Exception as e:
             Logger.info("Kabu: update_emotion_image error: %s", e)
 
@@ -604,8 +612,6 @@ class SessionPage(Screen):
                 Logger.info("Kabu: loop iteration start")
                 transcription = [None]
                 emotions = [None]
-                
-                tts.tts_kokoro(f""" Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
 
                 def audio_task():
                     try:

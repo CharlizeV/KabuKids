@@ -4,7 +4,7 @@ import numpy as np
 import sounddevice as sd
 from groq import Groq
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = ""
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 def tts_kokoro( text, voice="diana"):

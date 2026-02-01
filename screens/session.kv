@@ -10,15 +10,17 @@
             size: self.size
 
     FloatLayout:
-        # Centered emotion image
-        Image:
+        # Centered emotion video
+        Video:
             id: emos_img
             source: ""    # will be set from Python
             allow_stretch: True
             keep_ratio: True
             size_hint: None, None
-            size: dp(220), dp(220)
+            size: dp(820), dp(820)
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            state: 'play'
+            options: {'eos': 'loop'}
 
         # Small button in the top-right corner
         Button:
