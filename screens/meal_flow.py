@@ -414,6 +414,8 @@ class SessionPage(Screen):
         self.camera = None
         self.pipeline = None
         self.full_transcript = []
+        self.loading_popup = None
+        self.session_finished = False
 
     def on_pre_enter(self, *args):
         # set default neutral image immediately
@@ -487,16 +489,52 @@ class SessionPage(Screen):
             Logger.info("Kabu: update_emotion_image error: %s", e)
 
     def end_session(self, *args):
-        """Called by End Session button: stop worker and navigate to session."""
         try:
             Logger.info("Kabu: end_session pressed - stopping session")
             self.stop_session()
         except Exception as e:
             Logger.info("Kabu: end_session stop error: %s", e)
+
+        # Show non-dismissable loading popup
+        if not self.loading_popup:
+            content = Label(
+                text="Analyzing your meal and saving the report...\nPlease wait.",
+                halign="center",
+                valign="middle"
+            )
+            content.bind(size=lambda inst, size: setattr(inst, "text_size", size))
+
+            self.loading_popup = Popup(
+                title="Finishing up",
+                content=content,
+                size_hint=(0.7, 0.3),
+                auto_dismiss=False,
+            )
+        self.loading_popup.open()
+
+        # Start polling for background completion
+        self.session_finished = False  # reset before we wait
+        Clock.schedule_interval(self._check_session_finished, 0.3)
+
+    def _check_session_finished(self, dt):
+        """Poll from main thread until _run_session_loop has finished its cleanup."""
+        if not self.session_finished:
+            return  # keep waiting
+
+        # Done: stop polling
+        Clock.unschedule(self._check_session_finished)
+
+        # Close popup
+        if self.loading_popup:
+            try:
+                self.loading_popup.dismiss()
+            except Exception:
+                pass
+            self.loading_popup = None
         try:
             App.get_running_app().root.current = "inputIngredientsAM"
         except Exception as e:
-            Logger.info("Kabu: end_session nav error: %s", e)
+            Logger.info("Kabu: navigation error after loading: %s", e)
     
     def fmt_time(self,dt):
                     try:
@@ -599,13 +637,17 @@ class SessionPage(Screen):
             start_time = datetime.now(timezone.utc)
             Logger.info("Kabu: entering main loop")
 
+            first_reply = True
+
             # MAIN LOOP (preserve original logic) with safer joins and debug logging
             while not self._stop_event.is_set():
                 Logger.info("Kabu: loop iteration start")
                 transcription = [None]
                 emotions = [None]
-                
-                tts.tts_kokoro(f""" Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
+
+                if (first_reply):
+                    tts.tts_kokoro(f""" Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
+                    first_reply = False
 
                 def audio_task():
                     try:
@@ -762,6 +804,7 @@ class SessionPage(Screen):
                 Logger.info("Kabu: camera release finally error: %s", e)
 
             Logger.info("Kabu: _run_session_loop exited")
+            self.session_finished = True
 
 from kivy.graphics import Color, Rectangle
 from colors import ACCENT_COLOR, LIGHT_COLOR
