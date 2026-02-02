@@ -8,7 +8,7 @@ import sounddevice as sd
 from .config import SAMPLE_RATE, PROCESS_TIMEOUT
 
 # Check if API key is set
-GROQ_API_KEY = "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"
+GROQ_API_KEY = ""
 
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
