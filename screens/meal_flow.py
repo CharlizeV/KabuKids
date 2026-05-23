@@ -561,7 +561,7 @@ class SessionPage(Screen):
         Logger.info("Kabu: _run_session_loop starting")
         start = self.fmt_time(datetime.now())
         try:
-            # keep original initialization (unchanged) but log key steps
+ 
             Logger.info("Kabu: loading child_data")
             child_data = mongodb.get_child_by_id(CURRENT_MEAL.get("user_id"))
             Logger.info("Kabu: child_data loaded: %s", str(child_data.get("name")))
@@ -645,9 +645,9 @@ class SessionPage(Screen):
             start_time = datetime.now(timezone.utc)
             Logger.info("Kabu: entering main loop")
 
+            topics_mentioned = set()
             first_reply = True
 
-            # MAIN LOOP (preserve original logic) with safer joins and debug logging
             while not self._stop_event.is_set():
                 Logger.info("Kabu: loop iteration start")
                 transcription = [None]
@@ -692,17 +692,14 @@ class SessionPage(Screen):
                 audio_thread.start()
                 fer_thread.start()
 
-                # join with timeouts so we remain responsive to stop_event
                 audio_thread.join(timeout=35.0)
                 fer_thread.join(timeout=12.0)
 
-                # log if threads didn't finish
                 if audio_thread.is_alive():
                     Logger.info("Kabu: audio_thread still alive after join timeout")
                 if fer_thread.is_alive():
                     Logger.info("Kabu: fer_thread still alive after join timeout")
 
-                # after getting user_text/emotion from worker threads
                 user_text = (transcription[0] or "").strip()
                 emotion_list = emotions[0] or []
                 emotion_str = ", ".join(emotion_list) if emotion_list else "unknown"
@@ -734,9 +731,7 @@ class SessionPage(Screen):
                                                  "text": parsed['text'],
                                                  "timestamp": self.fmt_time(datetime.now(timezone.utc).isoformat()),
                                                  "emotion": parsed['emotions']})
-                    #If you to know what emotion the bot is giving you have to input parsed['emotions']
 
-                    # show Kabu's emotion image (ensure it's a list)
                     try:
                         kabu_emotions = parsed.get('emotions') or []
                         if isinstance(kabu_emotions, str):
@@ -761,7 +756,6 @@ class SessionPage(Screen):
             Logger.info("Kabu: _run_session_loop top-level exception: %s", e)
         finally:
             Logger.info("Kabu: _run_session_loop finishing, cleaning up")
-            # analysis (best-effort) — guard parsed so we can continue on failure
             try:
                 analysis_reply = llm.get_kabu_response(ANALYSIS_PROMPT)
                 Logger.info("\n--- Conversation Analysis ---")
@@ -772,7 +766,6 @@ class SessionPage(Screen):
                 Logger.info("Analysis request failed: %s", e)
                 parsed = {"recommendations": [], "disliked_foods": []}
 
-            # summary (best-effort)
             try:
                 end = self.fmt_time(datetime.now())
                 Logger.info("Kabu: requesting summary")
@@ -784,7 +777,6 @@ class SessionPage(Screen):
             try:
                 global loading_screen
                 global hash_meal_final
-                # keep structured types (lists/dicts) as-is so Mongo stores objects, not strings
                 meal_hash = {
                     "start_time": str(start),
                     "end_time": str(end),
@@ -849,7 +841,6 @@ class ColoredCheckBox(CheckBox):
             w = self.width if self.width and self.width > 0 else dp(24)
             h = self.height if self.height and self.height > 0 else dp(24)
             box_size = min(w, h)
-            # center the square inside the widget bounds
             x = self.x + (w - box_size) / 2
             y = self.y + (h - box_size) / 2
             self._bg.pos = (x, y)
