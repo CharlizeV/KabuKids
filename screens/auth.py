@@ -45,6 +45,49 @@ class LoginPage(Screen):
 class MakeAccountPage(Screen):
     birthday_display_text = StringProperty("Select Birthday")
 
+    def show_tag_warning(self, message):
+        content = BoxLayout(orientation="vertical", padding=dp(18), spacing=dp(12))
+        with content.canvas.before:
+            Color(0.74, 0.78, 0.45, 1)
+            content.bg = RoundedRectangle(pos=content.pos, size=content.size, radius=[dp(18),])
+        content.bind(pos=lambda obj, pos: setattr(obj.bg, 'pos', pos), size=lambda obj, size: setattr(obj.bg, 'size', size))
+
+        title = Label(
+            text="Warning !",
+            size_hint_y=None,
+            height=dp(70),
+            halign="left",
+            valign="middle",
+            color=(0.46, 0.57, 0.26, 1),
+            font_size=dp(44),
+            font_name="screens/fonts/Valekon.otf",
+            text_size=(0, None),
+        )
+        title.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
+        message_label = Label(
+            text=message,
+            halign="left",
+            valign="middle",
+            color=(0, 0, 0, 1),
+            font_size=dp(24),
+            text_size=(0, None),
+        )
+        message_label.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
+        content.add_widget(title)
+        content.add_widget(message_label)
+
+        Popup(
+            title="",
+            content=content,
+            size_hint=(0.76, 0.28),
+            auto_dismiss=True,
+            separator_height=0,
+            background="",
+            background_color=(0, 0, 0, 0),
+        ).open()
+
     def remove_tag(self, tag_layout):
         parent = tag_layout.parent
         parent.remove_widget(tag_layout)
@@ -118,8 +161,14 @@ class MakeAccountPage(Screen):
 
         def add_tag(instance):
             tag_text = text_input.text.strip()
-            if tag_text:
-                self.add_tag_to_section(section, tag_text)
+            if not tag_text:
+                return
+
+            if len(tag_text) > 32:
+                self.show_tag_warning("Tags cannot exceed 32 characters")
+                return
+
+            self.add_tag_to_section(section, tag_text)
             popup.dismiss()
 
         def cancel(instance):
