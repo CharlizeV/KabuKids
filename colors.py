@@ -4,11 +4,11 @@
 def rgba_from_255(r, g, b, a=255):
     return (r / 255.0, g / 255.0, b / 255.0, a / 255.0)
 
-PRIMARY_COLOR = rgba_from_255(255, 255, 255, 255) # white
-SECONDARY_COLOR = rgba_from_255(25, 110, 59, 255) #dark green
+PRIMARY_COLOR = rgba_from_255(254, 244, 226, 255) # white
+SECONDARY_COLOR = rgba_from_255(182, 196, 113, 255) #light green
 ACCENT_COLOR = rgba_from_255(254, 188, 65, 255) #yellow
 
 SUPER_LIGHT = rgba_from_255(151, 181, 118, 255) #very light gray
 
-DARK_COLOR = rgba_from_255(141, 106, 75, 255) #dark brown
+DARK_COLOR = rgba_from_255(95, 134, 53, 255) #dark brown
 LIGHT_COLOR = rgba_from_255(95, 134, 53, 255) #light green

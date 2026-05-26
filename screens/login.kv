@@ -2,125 +2,240 @@
 #:import accent_color colors.ACCENT_COLOR
 #:import primary_color colors.PRIMARY_COLOR
 #:import dark_color colors.DARK_COLOR
+#:import dp kivy.metrics.dp
+
+<RoundedInput@TextInput>:
+	background_normal: ""
+	background_active: ""
+	background_color: 0, 0, 0, 0
+	foreground_color: 0.18, 0.22, 0.16, 1
+	cursor_color: 0.18, 0.22, 0.16, 1
+	padding: [dp(16), dp(13)]
+	multiline: False
+	size_hint_y: None
+	height: dp(54)
+	font_size: dp(18)
+	canvas.before:
+		Color:
+			rgba: 1, 1, 1, 1
+		RoundedRectangle:
+			pos: self.pos
+			size: self.size
+			radius: [dp(18),]
+		Color:
+			rgba: 0.74, 0.72, 0.64, 1
+		Line:
+			width: 1.1
+			rounded_rectangle: (self.x, self.y, self.width, self.height, dp(18))
 
 <LoginPage>:
-    name: "login"
+	name: "login"
 
-    FloatLayout:
-        # Background: full-screen secondary color
-        canvas.before:
-            Color:
-                rgba: secondary_color
-            Rectangle:
-                pos: self.pos
-                size: self.size
+	FloatLayout:
+		canvas.before:
+			Color:
+				rgba: 0.74, 0.78, 0.45, 1
+			Rectangle:
+				pos: self.pos
+				size: self.size
 
-        # Login box (centered)
-        BoxLayout:
-            orientation: "vertical"
-            size_hint: 0.8, 0.6
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            padding: 30
-            spacing: 15
+		BoxLayout:
+			orientation: "horizontal"
+			size_hint: 1, 1
 
-            canvas.before:
-                Color:
-                    rgba: primary_color  # background of login box
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [20,]  # optional: rounded corners
+			BoxLayout:
+				orientation: "vertical"
+				size_hint_x: 0.33
+				padding: dp(26), dp(34)
+				spacing: dp(18)
 
-            # Header with accent dot
-            BoxLayout:
-                orientation: "horizontal"
-                size_hint_y: None
-                height: 40
-                spacing: 10
-                padding: [0, 0, 0, 10]
+				canvas.before:
+					Color:
+						rgba: 0.73, 0.78, 0.44, 1
+					Rectangle:
+						pos: self.pos
+						size: self.size
 
-                Image:
-                    source: "screens/icons/user.PNG" 
-                    size_hint: None, None
-                    size: 50, 50
-                    pos_hint: {"center_x": 0.50, "center_y": 0.45}
-                    allow_stretch: True
-                    keep_ratio: True
+				AnchorLayout:
+					anchor_x: "center"
+					anchor_y: "center"
+					size_hint: 1, 1
 
-                Label:
-                    text: "User Login"
-                    font_size: 35
-                    font_name: "screens/fonts/Valekon.otf"
-                    color: dark_color
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
+					BoxLayout:
+						orientation: "vertical"
+						size_hint: 1, None
+						height: self.minimum_height
+						spacing: dp(18)
 
-            # Username field
-            Label:
-                text: "Username"
-                color: dark_color
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-                size_hint_y: None
-                height: 30
+						Label:
+							text: "Hi! I'm\nKabu"
+							font_name: "screens/fonts/Valekon.otf"
+							font_size: dp(70)
+							color: primary_color
+							halign: "center"
+							valign: "middle"
+							text_size: self.width, self.height
+							size_hint_y: None
+							height: dp(140)
 
-            TextInput:
-                id: username_input
-                multiline: False
-                background_color: 1, 1, 1, 1  # white background
-                foreground_color: dark_color
-                size_hint_y: None
-                height: 45
-                padding: [10, 10]
+						Image:
+							source: "screens/icons/logo.PNG"
+							size_hint: None, None
+							size: dp(320), dp(320)
+							pos_hint: {"center_x": 0.5}
+							allow_stretch: True
+							keep_ratio: True
 
-            # Password field
-            Label:
-                text: "Password"
-                color: dark_color
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-                size_hint_y: None
-                height: 30
+						Label:
+							text: "I'm a catbot that can help your\nchild enjoy their mealtimes while\nalso helping you keep track on\nyour child's eating habits and\nmealtime behavior!"
+							font_size: dp(22)
+							color: 0.10, 0.19, 0.15, 1
+							halign: "center"
+							valign: "middle"
+							text_size: self.width, None
+							size_hint_y: None
+							height: dp(170)
 
-            TextInput:
-                id: password_input
-                multiline: False
-                password: True
-                background_color: 1, 1, 1, 1
-                foreground_color: dark_color
-                size_hint_y: None
-                height: 45
-                padding: [10, 10]
+			AnchorLayout:
+				anchor_x: "center"
+				anchor_y: "center"
+				size_hint_x: 0.67
+				size_hint_y: 1
+				canvas.before:
+					Color:
+						rgba: primary_color
+					RoundedRectangle:
+						pos: self.pos
+						size: self.size
+						radius: [dp(22), 0, 0, dp(22)]
 
-            # Login button
-            Button:
-                text: "Login"
-                font_name: "screens/fonts/Valekon.otf"
-                font_size: 22
-                background_normal: ""
-                background_color: accent_color
-                color: primary_color  # text color
-                size_hint_y: None
-                height: 50
-                on_press: root.login()
+				BoxLayout:
+					orientation: "vertical"
+					size_hint: 0.88, None
+					height: self.minimum_height
+					padding: dp(58), dp(44), dp(58), dp(38)
+					spacing: dp(18)
 
-            # Create account button
-            Button:
-                text: "Create an Account"
-                background_normal: ""
-                background_color: primary_color
-                font_name: "screens/fonts/Valekon.otf"
-                font_size: 22
-                color: dark_color
-                size_hint_y: None
-                height: 50
-                canvas.before:
-                    Color:
-                        rgba: secondary_color  # border color via outline
-                    Line:
-                        width: 2
-                        rectangle: (self.x, self.y, self.width, self.height)
-                on_press: app.root.current = "make_account"
+					BoxLayout:
+						orientation: "horizontal"
+						size_hint_y: None
+						height: dp(58)
+						spacing: dp(12)
+
+						Image:
+							source: "screens/icons/user.PNG"
+							size_hint: None, None
+							size: dp(44), dp(44)
+							pos_hint: {"center_y": 0.5}
+							allow_stretch: True
+							keep_ratio: True
+
+						Label:
+							text: "Login Page"
+							font_name: "screens/fonts/Valekon.otf"
+							font_size: dp(42)
+							color: dark_color
+							halign: "left"
+							valign: "middle"
+							text_size: self.size
+
+					Widget:
+						size_hint_y: None
+						height: dp(4)
+
+					Label:
+						text: "Username"
+						font_size: dp(22)
+						color: dark_color
+						halign: "left"
+						valign: "middle"
+						text_size: self.size
+						size_hint_y: None
+						height: dp(28)
+
+					RoundedInput:
+						id: username_input
+						hint_text: ""
+
+					Widget:
+						size_hint_y: None
+						height: dp(10)
+
+					Label:
+						text: "Password"
+						font_size: dp(22)
+						color: dark_color
+						halign: "left"
+						valign: "middle"
+						text_size: self.size
+						size_hint_y: None
+						height: dp(28)
+
+					RoundedInput:
+						id: password_input
+						password: True
+						hint_text: ""
+
+					Widget:
+						size_hint_y: None
+						height: dp(8)
+
+					Button:
+						text: "LOGIN"
+						font_name: "screens/fonts/Valekon.otf"
+						font_size: dp(24)
+						background_normal: ""
+						background_color: 0.74, 0.78, 0.45, 1
+						color: dark_color
+						size_hint_y: None
+						height: dp(56)
+						on_press: root.login()
+
+					BoxLayout:
+						size_hint_y: None
+						height: dp(42)
+						spacing: dp(20)
+						padding: [0, dp(8), 0, 0]
+
+						Widget:
+							canvas.before:
+								Color:
+									rgba: 0.32, 0.32, 0.28, 1
+								Rectangle:
+									pos: self.center_x - self.width / 2, self.center_y
+									size: self.width, dp(1)
+
+						Label:
+							text: "or"
+							font_size: dp(18)
+							color: dark_color
+							size_hint_x: None
+							width: dp(34)
+							halign: "center"
+							valign: "middle"
+							text_size: self.size
+
+						Widget:
+							canvas.before:
+								Color:
+									rgba: 0.32, 0.32, 0.28, 1
+								Rectangle:
+									pos: self.center_x - self.width / 2, self.center_y
+									size: self.width, dp(1)
+
+					Button:
+						text: "Create an account"
+						font_name: "screens/fonts/Valekon.otf"
+						font_size: dp(22)
+						background_normal: ""
+						background_color: 0, 0, 0, 0
+						color: dark_color
+						size_hint_y: None
+						height: dp(42)
+						on_press: app.root.current = "make_account"
+						canvas.before:
+							Color:
+								rgba: dark_color
+							Line:
+								width: 1.3
+								rectangle: (self.x + dp(14), self.y + dp(6), self.width - dp(28), self.height - dp(12))

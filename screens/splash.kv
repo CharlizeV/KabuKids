@@ -1,6 +1,7 @@
 #:import secondary_color colors.SECONDARY_COLOR
 #:import accent_color colors.ACCENT_COLOR
 #:import primary_color colors.PRIMARY_COLOR
+#:import dp kivy.metrics.dp
 
 <SplashScreen>:
     name: "splash"
@@ -17,38 +18,46 @@
 
     BoxLayout:
         orientation: "vertical"
-        size: root.width, root.height
-        padding: 200
-        spacing: 10
+        size_hint: 0.92, 0.80
+        pos_hint: {"center_x": 0.5, "top": 0.93}
+        padding: 0, dp(10), 0, 0
+        spacing: dp(14)
 
         Label:
-            text: "W e l c o m e   t o"
+            text: "Kabu Kids!"
             font_name: "screens/fonts/Valekon.otf"
-            font_size: 40
+            font_size: min(root.width * 0.085, root.height * 0.16)
             color: primary_color
-        
-        Image:
-            source: "screens/icons/logo.PNG" 
-            size_hint: None, None
-            size: 400, 400
-            pos_hint: {"center_x": 0.52}
-            allow_stretch: True
-            keep_ratio: True
+            halign: "center"
+            valign: "middle"
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
+
+        FloatLayout:
+            size_hint_y: None
+            height: min(root.width * 0.34, dp(470))
+
+            Image:
+                source: "screens/icons/logo.PNG"
+                size_hint: None, None
+                size: min(root.width * 0.34, dp(470)), min(root.width * 0.34, dp(470))
+                pos_hint: {"center_x": 0.5, "center_y": 0.58}
+                allow_stretch: True
+                keep_ratio: True
+
+    AnchorLayout:
+        anchor_x: "center"
+        anchor_y: "bottom"
+        size_hint: 1, 1
+        padding: 0, 0, 0, dp(28)
 
         Label:
-            text: "K a i b u   K i d s !"
-            font_name: "screens/fonts/Valekon.otf"
-            font_size: 40
+            text: "Click Anywhere to Start"
+            font_size: min(root.width * 0.042, dp(50))
+            halign: "center"
+            valign: "middle"
+            text_size: self.width, None
             color: primary_color
-            
-
-    Label:
-        text: "Click anywhere to start"
-        font_size: 24
-        halign: 'center'
-        text_size: self.size
-        color: primary_color
-        size_hint_y: None
-        height: 30
-        pos: self.center_x - self.width/2, 25 # <-- '50' is the padding in pixels
-        pos_hint: {'center_x': 0.5} # <-- Keeps it centered horizontally
+            size_hint: 0.95, None
+            height: self.texture_size[1] + dp(10)

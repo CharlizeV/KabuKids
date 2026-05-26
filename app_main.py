@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import ScreenManager
+from kivy.core.window import Window
 
 
 # import grouped screen modules so Builder can find class names in KV
@@ -11,6 +12,8 @@ import screens.profile
 import screens.meal_flow
 # import widgets used by KV
 import widgets.meal_item
+
+Window.size = (960, 540)
 
 class WindowManager(ScreenManager):
     pass
