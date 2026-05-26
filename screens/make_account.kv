@@ -2,6 +2,37 @@
 #:import primary_color colors.PRIMARY_COLOR
 #:import dark_color colors.DARK_COLOR
 #:import accent_color colors.ACCENT_COLOR
+#:import dp kivy.metrics.dp
+
+<RoundedField@TextInput>:
+	background_normal: ""
+	background_active: ""
+	background_color: 0, 0, 0, 0
+	foreground_color: 0.18, 0.22, 0.16, 1
+	cursor_color: 0.74, 0.72, 0.64, 1
+	padding: [dp(16), dp(13)]
+	multiline: False
+	size_hint_y: None
+	height: dp(54)
+	font_size: dp(18)
+	canvas.before:
+		Color:
+			rgba: 1, 1, 1, 1
+		RoundedRectangle:
+			pos: self.pos
+			size: self.size
+			radius: [dp(18),]
+		Color:
+			rgba: 0.74, 0.72, 0.64, 1
+		Line:
+			width: 1.1
+			rounded_rectangle: (self.x, self.y, self.width, self.height, dp(18))
+
+<TagSection@BoxLayout>:
+    orientation: "vertical"
+    spacing: dp(4)
+    size_hint_y: None
+    height: dp(260)
 
 <MakeAccountPage>:
     name: "make_account"
@@ -15,289 +46,399 @@
                 size: self.size
 
         BoxLayout:
-            orientation: "vertical"
-            size_hint: 0.9, 0.85
-            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-            padding: 20
-            spacing: 15
+            orientation: "horizontal"
+            size_hint: 1, 1
+            padding: dp(28), dp(24)
+            spacing: dp(26)
 
-            canvas.before:
-                Color:
-                    rgba: primary_color
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [20,]
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.68
+                padding: dp(34)
+                spacing: dp(12)
 
-            Label:
-                text: "Create Profile for Child"
-                font_name: "screens/fonts/Valekon.otf"
-                font_size: 35
-                color: dark_color
-                size_hint_y: None
-                height: 40
-                halign: "center"
-                valign: "middle"
-                text_size: self.size
+                canvas.before:
+                    Color:
+                        rgba: primary_color
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(22),]
 
-            ScrollView:
-                BoxLayout:
-                    orientation: 'vertical'
-                    padding: [20, 20, 20, 20]
-                    spacing: 15
+                Label:
+                    text: "Create an Account"
+                    font_name: "screens/fonts/Valekon.otf"
+                    font_size: dp(70)
+                    color: dark_color
                     size_hint_y: None
-                    height: self.minimum_height
+                    height: dp(150)
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.size
 
-                    # Profile Picture — UPDATED
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(130)
+                    spacing: dp(22)
+
                     BoxLayout:
-                        size_hint_y: None
-                        height: 100
-                        spacing: 10
+                        orientation: "vertical"
+                        size_hint_x: None
+                        width: dp(170)
+                        spacing: dp(10)
+
                         StencilView:
                             size_hint: None, None
-                            size: 80, 80
-                            pos_hint: {'center_y': 0.5}
+                            size: dp(150), dp(150)
 
                             canvas.before:
                                 Color:
-                                    rgba: 1,1,1,1
+                                    rgba: 0.93, 0.84, 0.41, 1
                                 Ellipse:
                                     pos: self.pos
                                     size: self.size
 
                             Image:
                                 id: profile_image
-                                source: ''
+                                source: ""
                                 size_hint: None, None
                                 size: self.parent.size
                                 pos: self.parent.pos
                                 allow_stretch: True
                                 keep_ratio: False
+
                         Button:
                             text: "Edit Photo"
-                            size_hint: None, None
-                            size: 120, 40
-                            pos_hint: {'center_y': 0.5}
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: dp(20)
+                            size_hint_y: None
+                            height: dp(36)
+                            background_normal: ""
+                            background_color: secondary_color
+                            color: dark_color
                             on_release: app.select_profile_picture()
 
-                    # NAME
                     BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: 60
-                        spacing: 5
-                        Label:
-                            text: "NAME"
-                            size_hint_y: None
-                            height: 20
-                            color: 0, 0, 0, 1
-                            font_size: 14
-                            halign: 'left'
-                            text_size: self.width, None
-                        TextInput:
-                            id: name_input
-                            hint_text: "Enter your name"
-                            multiline: False
-                            size_hint_y: None
-                            height: 40
-                            background_color: 0.95, 0.95, 0.95, 1
-                            padding: [10, 10]
+                        orientation: "vertical"
+                        spacing: dp(8)
 
-                    # USERNAME
-                    BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: 60
-                        spacing: 5
                         Label:
-                            text: "USERNAME"
+                            text: "Username"
+                            color: 0.12, 0.25, 0.18, 1
+                            font_size: dp(28)
                             size_hint_y: None
-                            height: 20
-                            color: 0, 0, 0, 1
-                            font_size: 14
-                            halign: 'left'
-                            text_size: self.width, None
-                        TextInput:
+                            height: dp(34)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+
+                        RoundedField:
                             id: username_input
-                            hint_text: "Enter your username"
-                            multiline: False
-                            size_hint_y: None
-                            height: 40
-                            background_color: 0.95, 0.95, 0.95, 1
-                            padding: [10, 10]
+                            hint_text: ""
 
-                    # BIRTHDAY
-                    BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: 60
-                        spacing: 5
-                        Label:
-                            text: "BIRTHDAY"
-                            size_hint_y: None
-                            height: 20
-                            color: 0, 0, 0, 1
-                            font_size: 14
-                            halign: 'left'
-                            text_size: self.width, None
-                        TextInput:
-                            id: birthday_input
-                            hint_text: "MM/DD/YYYY"
-                            multiline: False
-                            size_hint_y: None
-                            height: 40
-                            background_color: 0.95, 0.95, 0.95, 1
-                            padding: [10, 10]
+                Label:
+                    text: "Name"
+                    color: 0.12, 0.25, 0.18, 1
+                    font_size: dp(32)
+                    size_hint_y: None
+                    height: dp(34)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
 
-                    # GENDER
+                RoundedField:
+                    id: name_input
+                    hint_text: ""
+
+                Label:
+                    text: "Password"
+                    color: 0.12, 0.25, 0.18, 1
+                    font_size: dp(32)
+                    size_hint_y: None
+                    height: dp(34)
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                RoundedField:
+                    id: password_input
+                    password: True
+                    hint_text: ""
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(92)
+                    spacing: dp(18)
+
                     BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: 60
-                        spacing: 5
+                        orientation: "vertical"
+                        spacing: dp(6)
+
                         Label:
-                            text: "GENDER"
+                            text: "Birthday"
+                            color: 0.12, 0.25, 0.18, 1
+                            font_size: dp(32)
                             size_hint_y: None
-                            height: 20
-                            color: 0, 0, 0, 1
-                            font_size: 14
-                            halign: 'left'
-                            text_size: self.width, None
-                        TextInput:
+                            height: dp(34)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+
+                        Button:
+                            id: birthday_button
+                            text: root.birthday_display_text
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: dp(18)
+                            background_normal: ""
+                            background_color: 0.93, 0.93, 0.93, 1
+                            color: dark_color
+                            size_hint_y: None
+                            height: dp(56)
+                            on_release: root.open_birthday_picker()
+                            canvas.before:
+                                Color:
+                                    rgba: 0.93, 0.93, 0.93, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(18),]
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        spacing: dp(6)
+
+                        Label:
+                            text: "Gender"
+                            color: 0.12, 0.25, 0.18, 1
+                            font_size: dp(32)
+                            size_hint_y: None
+                            height: dp(34)
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+
+                        RoundedField:
                             id: gender_input
-                            hint_text: "e.g., Female, Male"
-                            multiline: False
-                            size_hint_y: None
-                            height: 40
-                            background_color: 0.95, 0.95, 0.95, 1
-                            padding: [10, 10]
+                            hint_text: ""
 
-                    # LIKES
-                    Label:
-                        text: "LIKES:"
-                        font_size: 20
-                        bold: True
-                        color: 0, 0, 0, 1
-                        halign: 'left'
-                        size_hint_y: None
-                        height: 35
-                    BoxLayout:
-                        id: likes_container
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: self.minimum_height if self.children else 40
-                        padding: [10, 10]
-                        spacing: 8
-                        canvas.before:
-                            Color:
-                                rgba: 0.9, 0.9, 0.9, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        Button:
-                            size_hint_y: None
-                            height: 30
-                            text: "+"
-                            font_size: '20sp'
-                            background_normal: ''
-                            background_color: 0.85, 0.85, 0.85, 1
-                            color: 0, 0, 0, 1
-                            on_press: root.add_tag_prompt("likes")
+                # hidden input retained for save_profile compatibility
+                TextInput:
+                    id: birthday_input
+                    opacity: 0
+                    disabled: True
+                    size_hint_y: None
+                    height: 0
 
-                    # DISLIKES
-                    Label:
-                        text: "DISLIKES:"
-                        font_size: 20
-                        bold: True
-                        color: 0, 0, 0, 1
-                        halign: 'left'
-                        size_hint_y: None
-                        height: 35
-                    BoxLayout:
-                        id: dislikes_container
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: self.minimum_height if self.children else 40
-                        padding: [10, 10]
-                        spacing: 8
-                        canvas.before:
-                            Color:
-                                rgba: 0.9, 0.9, 0.9, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        Button:
-                            size_hint_y: None
-                            height: 30
-                            text: "+"
-                            font_size: '20sp'
-                            background_normal: ''
-                            background_color: 0.85, 0.85, 0.85, 1
-                            color: 0, 0, 0, 1
-                            on_press: root.add_tag_prompt("dislikes")
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(64)
+                    spacing: dp(18)
+                    padding: [0, dp(10), 0, 0]
 
-                    # GOALS
-                    Label:
-                        text: "GOALS:"
-                        font_size: 20
-                        bold: True
-                        color: 0, 0, 0, 1
-                        halign: 'left'
-                        size_hint_y: None
-                        height: 35
-                    BoxLayout:
-                        id: goals_container
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: self.minimum_height if self.children else 40
-                        padding: [10, 10]
-                        spacing: 8
-                        canvas.before:
-                            Color:
-                                rgba: 0.9, 0.9, 0.9, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        Button:
-                            size_hint_y: None
-                            height: 30
-                            text: "+"
-                            font_size: '20sp'
-                            background_normal: ''
-                            background_color: 0.85, 0.85, 0.85, 1
-                            color: 0, 0, 0, 1
-                            on_press: root.add_tag_prompt("goals")
-
-                    # Password 
-                    BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: 60
-                        spacing: 5
-                        Label:
-                            text: "Password"
-                            size_hint_y: None
-                            height: 20
-                            color: 0, 0, 0, 1
-                            font_size: 14
-                            halign: 'left'
-                            text_size: self.width, None
-                        TextInput:
-                            id: password_input
-                            multiline: False
-                            size_hint_y: None
-                            height: 40
-                            background_color: 0.95, 0.95, 0.95, 1
-                            padding: [10, 10]
-
-                    # SAVE BUTTON
                     Button:
-                        text: "Save Profile"
+                        text: "CREATE"
                         font_name: "screens/fonts/Valekon.otf"
-                        font_size: 25
+                        font_size: dp(35)
+                        background_normal: ""
+                        background_color: secondary_color
+                        color: dark_color
+                        on_press: root.save_profile()
+
+                    Button:
+                        text: "CANCEL"
+                        font_name: "screens/fonts/Valekon.otf"
+                        font_size: dp(35)
                         background_normal: ""
                         background_color: accent_color
                         color: primary_color
+                        on_press: app.root.current = "login"
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.32
+                spacing: dp(2)
+                padding: [0, dp(4), 0, dp(4)]
+
+                TagSection:
+                    BoxLayout:
                         size_hint_y: None
-                        height: 50
-                        on_press: root.save_profile()
+                        height: dp(58)
+                        spacing: dp(8)
+
+                        Label:
+                            text: "Likes"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: dp(46)
+                            color: primary_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                            size_hint_y: None
+                            height: dp(58)
+
+                        Button:
+                            text: "+"
+                            size_hint: None, None
+                            size: dp(48), dp(48)
+                            background_normal: ""
+                            background_color: primary_color
+                            color: secondary_color
+                            font_size: dp(44)
+                            on_press: root.add_tag_prompt("likes")
+                            canvas.before:
+                                Color:
+                                    rgba: primary_color
+                                Ellipse:
+                                    pos: self.pos
+                                    size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(180)
+                        padding: dp(4)
+
+                        canvas.before:
+                            Color:
+                                rgba: primary_color
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16),]
+
+                        ScrollView:
+                            do_scroll_x: True
+                            do_scroll_y: True
+                            bar_width: dp(8)
+                            background_color: 0, 0, 0, 0
+
+                            StackLayout:
+                                id: likes_container
+                                orientation: "lr-tb"
+                                spacing: dp(8)
+                                padding: [dp(10), dp(10)]
+                                size_hint_y: None
+                                size_hint_x: 1
+                                height: self.minimum_height
+
+                TagSection:
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(58)
+                        spacing: dp(8)
+
+                        Label:
+                            text: "Dislikes"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: dp(46)
+                            color: primary_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                            size_hint_y: None
+                            height: dp(58)
+
+                        Button:
+                            text: "+"
+                            size_hint: None, None
+                            size: dp(48), dp(48)
+                            background_normal: ""
+                            background_color: primary_color
+                            color: secondary_color
+                            font_size: dp(44)
+                            on_press: root.add_tag_prompt("dislikes")
+                            canvas.before:
+                                Color:
+                                    rgba: primary_color
+                                Ellipse:
+                                    pos: self.pos
+                                    size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(180)
+                        padding: dp(4)
+
+                        canvas.before:
+                            Color:
+                                rgba: primary_color
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16),]
+
+                        ScrollView:
+                            do_scroll_x: True
+                            do_scroll_y: True
+                            bar_width: dp(8)
+                            background_color: 0, 0, 0, 0
+
+                            StackLayout:
+                                id: dislikes_container
+                                orientation: "lr-tb"
+                                spacing: dp(8)
+                                padding: [dp(10), dp(10)]
+                                size_hint_y: None
+                                size_hint_x: 1
+                                height: self.minimum_height
+
+                TagSection:
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(58)
+                        spacing: dp(8)
+
+                        Label:
+                            text: "Goals"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: dp(46)
+                            color: primary_color
+                            halign: "left"
+                            valign: "middle"
+                            text_size: self.size
+                            size_hint_y: None
+                            height: dp(58)
+
+                        Button:
+                            text: "+"
+                            size_hint: None, None
+                            size: dp(48), dp(48)
+                            background_normal: ""
+                            background_color: primary_color
+                            color: secondary_color
+                            font_size: dp(44)
+                            on_press: root.add_tag_prompt("goals")
+                            canvas.before:
+                                Color:
+                                    rgba: primary_color
+                                Ellipse:
+                                    pos: self.pos
+                                    size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(180)
+                        padding: dp(4)
+
+                        canvas.before:
+                            Color:
+                                rgba: primary_color
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16),]
+
+                        ScrollView:
+                            do_scroll_x: True
+                            do_scroll_y: True
+                            bar_width: dp(8)
+                            background_color: 0, 0, 0, 0
+
+                            StackLayout:
+                                id: goals_container
+                                orientation: "lr-tb"
+                                spacing: dp(8)
+                                padding: [dp(10), dp(10)]
+                                size_hint_y: None
+                                size_hint_x: 1
+                                height: self.minimum_height
