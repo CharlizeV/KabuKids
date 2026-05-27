@@ -1,0 +1,88 @@
+#:import secondary_color colors.SECONDARY_COLOR
+#:import primary_color colors.PRIMARY_COLOR
+#:import light_color colors.LIGHT_COLOR
+#:import dp kivy.metrics.dp
+
+<ReportDashboardPage>:
+    name: "report_dashboard"
+
+    canvas.before:
+        Color:
+            rgba: primary_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(60)
+            padding: dp(10)
+            spacing: dp(10)
+
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: dp(10)
+
+                ImageButton:
+                    source: "screens/icons/dashboard.png"
+                    size_hint: None, None
+                    size: 50, 50
+                    pos_hint: {"center_x": 0.50, "center_y": 0.5}
+                    allow_stretch: True
+                    keep_ratio: True
+                    on_press: app.root.current = "dashboard"
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: root.user_name
+                        font_name: "screens/fonts/Valekon.otf"
+                        font_size: 30
+                        halign: 'left'
+                        valign: 'middle'
+                        size_hint_y: None
+                        color: secondary_color
+                        height: self.texture_size[1]
+
+            ImageButton:
+                source: "screens/icons/profile.png"
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_press: app.root.current = "profile"
+
+        Widget:
+            size_hint_y: None
+            height: dp(2)
+            canvas:
+                Color:
+                    rgba: secondary_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.width, dp(2)
+
+        ScrollView:
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(20)
+                spacing: dp(20)
+                size_hint_y: None
+                height: self.minimum_height
+
+                Label:
+                    text: "PREVIOUS MEALS"
+                    font_name: "screens/fonts/Valekon.otf"
+                    color: secondary_color
+                    font_size: 30
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    halign: 'left'
+                    text_size: self.size
+
+                BoxLayout:
+                    id: meals_list
+                    orientation: 'vertical'
+                    spacing: dp(10)
+                    size_hint_y: None
+                    height: self.minimum_height

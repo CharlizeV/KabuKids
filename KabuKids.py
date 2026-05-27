@@ -2,7 +2,7 @@ import kivy
 kivy.require('2.0.0')
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -387,6 +387,13 @@ class MakeAccountPage(Screen):
 class DashboardPage(Screen):
     _reports_loaded = False
     user_name = StringProperty("User Name")   # <-- new property
+    first_name = StringProperty("User")
+
+    def _derive_first_name(self, value):
+        if not value:
+            return "User"
+        parts = str(value).strip().split()
+        return parts[0] if parts else "User"
 
     def on_enter(self, *args):
         # update displayed user name from the logged-in user
@@ -401,14 +408,10 @@ class DashboardPage(Screen):
             except Exception:
                 name = "User"
             self.user_name = name
+            self.first_name = self._derive_first_name(name)
         else:
             self.user_name = "User"
-
-        if not self._reports_loaded:
-            self.ids.meals_list.clear_widgets()
-            self.load_reports_from_db()
-        else:
-            self._populate_list()
+            self.first_name = "User"
 
     def load_reports_from_db(self):
         # Get current user id from the running app
@@ -494,6 +497,35 @@ class DashboardPage(Screen):
                 end_time=report.get("end_time", "")
             )
             self.ids.meals_list.add_widget(item)
+
+class ReportDashboardPage(Screen):
+    _reports_loaded = False
+    user_name = StringProperty("User Name")
+
+    def on_enter(self, *args):
+        app = App.get_running_app()
+        current_user = getattr(app, "current_user", None)
+        if current_user:
+            try:
+                if isinstance(current_user, dict):
+                    name = current_user.get("name") or current_user.get("username") or "User"
+                else:
+                    name = getattr(current_user, "name", None) or getattr(current_user, "username", "User")
+            except Exception:
+                name = "User"
+            self.user_name = name
+        else:
+            self.user_name = "User"
+
+        self.ids.meals_list.clear_widgets()
+        self._reports_loaded = False
+        self.load_reports_from_db()
+
+    def load_reports_from_db(self):
+        DashboardPage.load_reports_from_db(self)
+
+    def _populate_list(self):
+        DashboardPage._populate_list(self)
 
 class ProfilePage(Screen):
     # values bound to KV
@@ -1448,7 +1480,9 @@ class SessionPage(Screen):
     pass
 
 class WindowManager(ScreenManager):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.transition = NoTransition()
 
 # Load the kv file
 kv = Builder.load_file("KabuKids.kv")

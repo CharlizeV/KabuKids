@@ -4,118 +4,294 @@
 #:import dark_color colors.DARK_COLOR
 #:import light_color colors.LIGHT_COLOR
 #:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 
 <DashboardPage>:
     name: "dashboard"
 
     canvas.before:
         Color:
-            rgba: primary_color
+            rgba: secondary_color
         Rectangle:
             pos: self.pos
             size: self.size
 
     BoxLayout:
-        orientation: 'vertical'
-        
-        # Header
-        BoxLayout:
-            size_hint_y: None
-            height: dp(60)
-            padding: dp(10)
-            spacing: dp(10)
-            
-            # Left side: Profile picture and info
-            BoxLayout:
-                orientation: 'horizontal'
-                spacing: dp(10)
-                
-                Image:
-                    source: "screens/icons/dashboard.png" 
-                    size_hint: None, None
-                    size: 50, 50
-                    pos_hint: {"center_x": 0.50, "center_y": 0.5}
-                    allow_stretch: True
-                    keep_ratio: True
-                
-                # Name
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: root.user_name
-                        font_name: "screens/fonts/Valekon.otf"
-                        font_size: 30
-                        halign: 'left'
-                        valign: 'middle'
-                        size_hint_y: None
-                        color: secondary_color
-                        height: self.texture_size[1]
-            
-            # Right side: Edit button
-            ImageButton:
-                source: "screens/icons/profile.png"
-                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                on_press: app.root.current = "profile"
+        orientation: 'horizontal'
 
-        # ====== DIVIDER LINE ======
-        Widget:
-            size_hint_y: None
-            height: dp(2)
-            canvas:
-                Color:
-                    rgba: secondary_color
-                Rectangle:
-                    pos: self.pos
-                    size: self.width, dp(2)
-        
-        # Main content area
-        ScrollView:
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.27
+            padding: dp(24), dp(22), dp(20), dp(22)
+            spacing: dp(16)
+
+            Widget:
+                size_hint_y: 1
+
+            Image:
+                source: "screens/icons/logo.PNG"
+                size_hint: None, None
+                size: dp(220), dp(220)
+                allow_stretch: True
+                keep_ratio: True
+                pos_hint: {"center_x": 0.5}
+
             BoxLayout:
                 orientation: 'vertical'
-                padding: dp(20)
-                spacing: dp(20)
                 size_hint_y: None
-                height: self.minimum_height
-                
-                # START MEAL button
-                Button:
-                    text: "START MEAL"
-                    size_hint_y: None
-                    height: dp(60)
-                    size_hint_x: 0.99
-                    pos_hint: {'center_x': 0.5}
-                    background_normal: ''        # use custom canvas instead of default bg
-                    background_color: 0,0,0,0
-                    on_press: app.root.current = "inputIngredientsBM"
-                    font_size: sp(18)
-                    bold: True
-                    color: 1,1,1,1
-                    canvas.before:
-                        Color:
-                            rgba: light_color
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(12), dp(12), dp(12), dp(12)]
-                
-                # PREVIOUS MEALS section
+                height: dp(100)
+                spacing: dp(2)
+
                 Label:
-                    text: "PREVIOUS MEALS"
+                    text: "Hi there,"
                     font_name: "screens/fonts/Valekon.otf"
-                    color: secondary_color
-                    font_size: 30
-                    size_hint_y: None
-                    height: self.texture_size[1]
-                    halign: 'left'
+                    font_size: sp(26)
+                    color: dark_color
+                    halign: 'center'
+                    valign: 'middle'
                     text_size: self.size
-                
-                # Container for dynamic meal items
+
+                Label:
+                    text: root.first_name
+                    font_name: "screens/fonts/Valekon.otf"
+                    font_size: sp(34)
+                    color: primary_color
+                    bold: True
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Widget:
+                size_hint_y: None
+                height: dp(24)
+
+            SideNavItem:
+                icon_source: "screens/icons/dashboard.png"
+                label_text: "Home"
+                on_press: app.root.current = "dashboard"
+
+            SideNavItem:
+                icon_source: "screens/icons/reports.png"
+                label_text: "Reports"
+                on_press: app.root.current = "report_dashboard"
+
+            SideNavItem:
+                icon_source: "screens/icons/profile.png"
+                label_text: "Profile"
+                on_press: app.root.current = "profile"
+
+            Widget:
+                size_hint_y: 1
+
+            Widget:
+                size_hint_y: None
+                height: dp(2)
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.73
+            padding: dp(28), dp(18), dp(28), dp(24)
+
+            canvas.before:
+                Color:
+                    rgba: primary_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(22), 0, 0, dp(22)]
+
+            AnchorLayout:
+                anchor_x: 'left'
+                anchor_y: 'top'
+
                 BoxLayout:
-                    id: meals_list  # key
                     orientation: 'vertical'
-                    spacing: dp(10)
+                    spacing: dp(20)
+                    padding: 0, dp(2), 0, 0
                     size_hint_y: None
                     height: self.minimum_height
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(72)
+                        spacing: dp(14)
+
+                        ImageButton:
+                            source: "screens/icons/dashboard.png"
+                            size: dp(56), dp(56)
+                            on_press: app.root.current = "dashboard"
+
+                        Label:
+                            text: "Home"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: sp(44)
+                            color: dark_color
+                            bold: True
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(285)
+                        spacing: dp(20)
+
+                        StartMealCard:
+                            size_hint_x: 0.53
+                            on_press: app.root.current = "inputIngredientsBM"
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_x: 0.47
+                            spacing: dp(3)
+                            padding: 0, dp(6), 0, 0
+
+                            Label:
+                                text: "Fun Fact of the Day!"
+                                font_name: "screens/fonts/Valekon.otf"
+                                font_size: sp(28)
+                                color: dark_color
+                                bold: True
+                                halign: 'left'
+                                valign: 'middle'
+                                size_hint_y: None
+                                height: self.texture_size[1]
+                                text_size: self.size
+
+                            FloatLayout:
+                                size_hint_y: 1
+                                BoxLayout:
+                                    orientation: 'vertical'
+                                    size_hint: 0.80, None
+                                    height: dp(10)
+                                    pos_hint: {'x': 0.0, 'top': 1.0}
+                                    spacing: dp(0)
+
+                                    BoxLayout:
+                                        orientation: 'vertical'
+                                        size_hint_y: None
+                                        height: dp(128)
+                                        padding: dp(16), dp(14)
+                                        canvas.before:
+                                            Color:
+                                                rgba: accent_color
+                                            RoundedRectangle:
+                                                pos: self.pos
+                                                size: self.size
+                                                radius: [dp(14), dp(14), dp(14), dp(14)]
+
+                                        Label:
+                                            text: "Did you know that broccoli is like super super duper healthy for you. It may look scary but its one of the tastiest food ever"
+                                            font_size: sp(17)
+                                            color: 0, 0, 0, 1
+                                            halign: 'left'
+                                            valign: 'middle'
+                                            text_size: self.width, None
+                                            size_hint_y: 1
+
+                                    RelativeLayout:
+                                        size_hint_y: None
+                                        height: dp(80)
+
+                                        Image:
+                                            source: "screens/icons/Kabu_FunFact.PNG"
+                                            size_hint: None, None
+                                            size: dp(150), dp(150)
+                                            pos_hint: {'right': 1.07, 'y': -0.28}
+                                            allow_stretch: True
+                                            keep_ratio: True
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: dp(120)
+                        spacing: dp(25)
+
+                        Label:
+                            text: "About Us"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: sp(34)
+                            color: dark_color
+                            bold: True
+                            halign: 'left'
+                            valign: 'middle'
+                            size_hint_y: None
+                            text_size: self.size
+
+                        Label:
+                            text: "Kabu Kids is a Computer Science thesis project by Francis Kyle E. Clemente, Marc Yuri Olivares, and Charlize Y. Villaflores. This interactive chatbot makes mealtimes fun and focused for kids while helping parents track their child’s eating habits."
+                            font_size: sp(26)
+                            color: 0, 0, 0, 1
+                            halign: 'left'
+                            valign: 'top'
+                            text_size: self.width, None
+                            size_hint_y: None
+
+<SideNavItem@ButtonBehavior+BoxLayout>:
+    icon_source: ""
+    label_text: ""
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(72)
+    spacing: dp(14)
+    padding: dp(10), dp(8)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 0
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+    Image:
+        source: root.icon_source
+        size_hint: None, None
+        size: dp(42), dp(42)
+        allow_stretch: True
+        keep_ratio: True
+        pos_hint: {'center_y': 0.5}
+    Label:
+        text: root.label_text
+        font_name: "screens/fonts/Valekon.otf"
+        font_size: sp(28)
+        color: dark_color
+        bold: True
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+
+<StartMealCard@ButtonBehavior+BoxLayout>:
+    orientation: 'vertical'
+    padding: dp(18)
+    spacing: dp(10)
+    canvas.before:
+        Color:
+            rgba: secondary_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+    canvas.after:
+        Color:
+            rgba: dark_color
+        Line:
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(16))
+            width: dp(1.6)
+    Image:
+        source: "screens/icons/Kabu_StartMeal.PNG"
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: 0.78
+    Label:
+        text: "Start Meal"
+        font_name: "screens/fonts/Valekon.otf"
+        font_size: sp(34)
+        color: dark_color
+        bold: True
+        halign: 'center'
+        valign: 'middle'
+        size_hint_y: None
+        height: dp(42)
+        text_size: self.size
 
 <ImageButton@ButtonBehavior+Image>:
     allow_stretch: True

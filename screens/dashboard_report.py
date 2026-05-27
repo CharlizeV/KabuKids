@@ -34,6 +34,13 @@ class ImageButton(ButtonBehavior, Image):
 class DashboardPage(Screen):
     _reports_loaded = False
     user_name = StringProperty("User Name")   # <-- new property
+    first_name = StringProperty("User")
+
+    def _derive_first_name(self, value):
+        if not value:
+            return "User"
+        first = str(value).strip().split()
+        return first[0] if first else "User"
 
     def on_enter(self, *args):
         # update displayed user name from the logged-in user
@@ -48,14 +55,10 @@ class DashboardPage(Screen):
             except Exception:
                 name = "User"
             self.user_name = name
+            self.first_name = self._derive_first_name(name)
         else:
             self.user_name = "User"
-
-        # Always refresh the reports when the dashboard is shown so the list
-        # reflects any newly inserted meals (e.g., coming from SessionPage).
-        self.ids.meals_list.clear_widgets()
-        self._reports_loaded = False
-        self.load_reports_from_db()
+            self.first_name = "User"
 
     def load_reports_from_db(self):
         # Get current user id from the running app
@@ -200,6 +203,36 @@ class DashboardPage(Screen):
             )
             self.ids.meals_list.add_widget(item)
 
+
+class ReportDashboardPage(Screen):
+    _reports_loaded = False
+    user_name = StringProperty("User Name")
+
+    def on_enter(self, *args):
+        app = App.get_running_app()
+        current_user = getattr(app, "current_user", None)
+        if current_user:
+            try:
+                if isinstance(current_user, dict):
+                    name = current_user.get("name") or current_user.get("username") or "User"
+                else:
+                    name = getattr(current_user, "name", None) or getattr(current_user, "username", "User")
+            except Exception:
+                name = "User"
+            self.user_name = name
+        else:
+            self.user_name = "User"
+
+        self.ids.meals_list.clear_widgets()
+        self._reports_loaded = False
+        self.load_reports_from_db()
+
+    def load_reports_from_db(self):
+        DashboardPage.load_reports_from_db(self)
+
+    def _populate_list(self):
+        DashboardPage._populate_list(self)
+
 class ReportPage(Screen):
     date = StringProperty("")
     time_range = StringProperty("")
@@ -259,7 +292,6 @@ class ReportPage(Screen):
         # Suggestions (with real newlines)
         self.formatted_ingredient_suggestions = "\n".join([f"• {s}" for s in data["ingredient_suggestions"]])
         self.formatted_conversation_suggestions = "\n".join([f'• "{s}"' for s in data["conversation_suggestions"]])
-
 class TranscriptPage(Screen):
     def on_pre_enter(self, *args):
         content = self.ids.transcript_content

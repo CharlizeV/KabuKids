@@ -6,7 +6,7 @@ def rgba_from_255(r, g, b, a=255):
 
 PRIMARY_COLOR = rgba_from_255(254, 244, 226, 255) # white
 SECONDARY_COLOR = rgba_from_255(182, 196, 113, 255) #light green
-ACCENT_COLOR = rgba_from_255(254, 188, 65, 255) #yellow
+ACCENT_COLOR = rgba_from_255(241, 210, 92, 255) #yellow
 
 SUPER_LIGHT = rgba_from_255(151, 181, 118, 255) #very light gray
 
