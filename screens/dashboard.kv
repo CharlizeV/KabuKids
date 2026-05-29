@@ -21,7 +21,7 @@
 
         BoxLayout:
             orientation: 'vertical'
-            size_hint_x: 0.27
+            size_hint_x: 0.25
             padding: dp(24), dp(22), dp(20), dp(22)
             spacing: dp(16)
 
@@ -31,7 +31,7 @@
             Image:
                 source: "screens/icons/logo.PNG"
                 size_hint: None, None
-                size: dp(220), dp(220)
+                size: dp(250), dp(250)
                 allow_stretch: True
                 keep_ratio: True
                 pos_hint: {"center_x": 0.5}
@@ -45,7 +45,7 @@
                 Label:
                     text: "Hi there,"
                     font_name: "screens/fonts/Valekon.otf"
-                    font_size: sp(26)
+                    font_size: sp(30)
                     color: dark_color
                     halign: 'center'
                     valign: 'middle'
@@ -54,7 +54,7 @@
                 Label:
                     text: root.first_name
                     font_name: "screens/fonts/Valekon.otf"
-                    font_size: sp(34)
+                    font_size: sp(40)
                     color: primary_color
                     bold: True
                     halign: 'center'
@@ -89,7 +89,7 @@
 
         BoxLayout:
             orientation: 'vertical'
-            size_hint_x: 0.73
+            size_hint_x: 0.80
             padding: dp(28), dp(18), dp(28), dp(24)
 
             canvas.before:
@@ -103,48 +103,56 @@
             AnchorLayout:
                 anchor_x: 'left'
                 anchor_y: 'top'
+                padding: dp(10), dp(20), 0, 0
 
                 BoxLayout:
                     orientation: 'vertical'
                     spacing: dp(20)
-                    padding: 0, dp(2), 0, 0
+                    padding: 0, dp(2), 0, dp(10)
                     size_hint_y: None
                     height: self.minimum_height
 
                     BoxLayout:
                         size_hint_y: None
-                        height: dp(72)
+                        height: dp(100)
                         spacing: dp(14)
 
                         ImageButton:
                             source: "screens/icons/dashboard.png"
-                            size: dp(56), dp(56)
+                            size: dp(90), dp(90)
                             on_press: app.root.current = "dashboard"
+                            valign: 'middle'
 
                         Label:
                             text: "Home"
                             font_name: "screens/fonts/Valekon.otf"
-                            font_size: sp(44)
+                            font_size: sp(70)
                             color: dark_color
                             bold: True
                             halign: 'left'
-                            valign: 'middle'
+                            valign: 'bottom'
                             text_size: self.size
 
                     BoxLayout:
                         size_hint_y: None
-                        height: dp(285)
-                        spacing: dp(20)
+                        height: dp(420)
+                        spacing: dp(10)
 
-                        StartMealCard:
-                            size_hint_x: 0.53
-                            on_press: app.root.current = "inputIngredientsBM"
+                        AnchorLayout:
+                            size_hint_x: 0.50
+                            anchor_x: 'center'
+                            anchor_y: 'center'
+
+                            StartMealCard:
+                                size_hint: 0.95, 0.80
+                                on_press: app.root.current = "inputIngredientsBM"
 
                         BoxLayout:
                             orientation: 'vertical'
-                            size_hint_x: 0.47
+                            size_hint_x: 0.55
                             spacing: dp(3)
-                            padding: 0, dp(6), 0, 0
+                            padding: 0, 0, 0, 0
+                            pos_hint: {'right': 1.07, 'y': 0.2}
 
                             Label:
                                 text: "Fun Fact of the Day!"
@@ -162,7 +170,7 @@
                                 size_hint_y: 1
                                 BoxLayout:
                                     orientation: 'vertical'
-                                    size_hint: 0.80, None
+                                    size_hint: 0.75, None
                                     height: dp(10)
                                     pos_hint: {'x': 0.0, 'top': 1.0}
                                     spacing: dp(0)
@@ -196,7 +204,7 @@
                                         Image:
                                             source: "screens/icons/Kabu_FunFact.PNG"
                                             size_hint: None, None
-                                            size: dp(150), dp(150)
+                                            size: dp(180), dp(180)
                                             pos_hint: {'right': 1.07, 'y': -0.28}
                                             allow_stretch: True
                                             keep_ratio: True
@@ -205,12 +213,12 @@
                         orientation: 'vertical'
                         size_hint_y: None
                         height: dp(120)
-                        spacing: dp(25)
+                        spacing: dp(40)
 
                         Label:
                             text: "About Us"
                             font_name: "screens/fonts/Valekon.otf"
-                            font_size: sp(34)
+                            font_size: sp(40)
                             color: dark_color
                             bold: True
                             halign: 'left'

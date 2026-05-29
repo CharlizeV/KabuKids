@@ -207,6 +207,13 @@ class DashboardPage(Screen):
 class ReportDashboardPage(Screen):
     _reports_loaded = False
     user_name = StringProperty("User Name")
+    first_name = StringProperty("User")
+
+    def _derive_first_name(self, value):
+        if not value:
+            return "User"
+        first = str(value).strip().split()
+        return first[0] if first else "User"
 
     def on_enter(self, *args):
         app = App.get_running_app()
@@ -220,8 +227,10 @@ class ReportDashboardPage(Screen):
             except Exception:
                 name = "User"
             self.user_name = name
+            self.first_name = self._derive_first_name(name)
         else:
             self.user_name = "User"
+            self.first_name = "User"
 
         self.ids.meals_list.clear_widgets()
         self._reports_loaded = False
