@@ -782,7 +782,28 @@ class SessionPage(Screen):
             try:
                 end = self.fmt_time(datetime.now())
                 Logger.info("Kabu: requesting summary")
-                summary = llm.get_kabu_response(SUMMARY_PROMPT) or ""
+                
+                # Build conversation transcript from full_transcript (only what was said)
+                conversation_text = ""
+                if self.full_transcript:
+                    for entry in self.full_transcript:
+                        speaker = entry.get("speaker", "Unknown").capitalize()
+                        text = entry.get("text", "")
+                        conversation_text += f"{speaker}: {text}\n"
+                
+                # Create a focused summary prompt with only the conversation
+                focused_summary_prompt = f"""
+Based ONLY on the following mealtime conversation, create a 5 sentence summary of what happened during the meal. Do NOT invent or add any context outside of this conversation. Focus only on what was actually discussed.
+
+MEALTIME CONVERSATION:
+{conversation_text}
+
+Please provide a 5 sentence summary:
+"""
+                
+                # Use direct API call to get summary without system context
+                summary = llm.get_direct_response(focused_summary_prompt, max_tokens=512) or ""
+                
             except Exception as e:
                 Logger.info("Kabu: summary request failed: %s", e)
                 summary = ""
