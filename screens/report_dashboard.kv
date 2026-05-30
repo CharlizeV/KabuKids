@@ -1,88 +1,197 @@
 #:import secondary_color colors.SECONDARY_COLOR
+#:import accent_color colors.ACCENT_COLOR
 #:import primary_color colors.PRIMARY_COLOR
+#:import dark_color colors.DARK_COLOR
 #:import light_color colors.LIGHT_COLOR
 #:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 
 <ReportDashboardPage>:
     name: "report_dashboard"
 
     canvas.before:
         Color:
-            rgba: primary_color
+            rgba: secondary_color
         Rectangle:
             pos: self.pos
             size: self.size
 
     BoxLayout:
-        orientation: 'vertical'
+        orientation: 'horizontal'
 
         BoxLayout:
-            size_hint_y: None
-            height: dp(60)
-            padding: dp(10)
-            spacing: dp(10)
+            orientation: 'vertical'
+            size_hint_x: 0.25
+            padding: dp(24), dp(22), dp(20), dp(22)
+            spacing: dp(16)
 
-            BoxLayout:
-                orientation: 'horizontal'
-                spacing: dp(10)
+            Widget:
+                size_hint_y: 1
 
-                ImageButton:
-                    source: "screens/icons/dashboard.png"
-                    size_hint: None, None
-                    size: 50, 50
-                    pos_hint: {"center_x": 0.50, "center_y": 0.5}
-                    allow_stretch: True
-                    keep_ratio: True
-                    on_press: app.root.current = "dashboard"
+            Image:
+                source: "screens/icons/logo.PNG"
+                size_hint: None, None
+                size: dp(250), dp(250)
+                allow_stretch: True
+                keep_ratio: True
+                pos_hint: {"center_x": 0.5}
 
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: root.user_name
-                        font_name: "screens/fonts/Valekon.otf"
-                        font_size: 30
-                        halign: 'left'
-                        valign: 'middle'
-                        size_hint_y: None
-                        color: secondary_color
-                        height: self.texture_size[1]
-
-            ImageButton:
-                source: "screens/icons/profile.png"
-                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                on_press: app.root.current = "profile"
-
-        Widget:
-            size_hint_y: None
-            height: dp(2)
-            canvas:
-                Color:
-                    rgba: secondary_color
-                Rectangle:
-                    pos: self.pos
-                    size: self.width, dp(2)
-
-        ScrollView:
             BoxLayout:
                 orientation: 'vertical'
-                padding: dp(20)
-                spacing: dp(20)
                 size_hint_y: None
-                height: self.minimum_height
+                height: dp(100)
+                spacing: dp(2)
 
                 Label:
-                    text: "PREVIOUS MEALS"
+                    text: "Hi there,"
                     font_name: "screens/fonts/Valekon.otf"
-                    color: secondary_color
-                    font_size: 30
-                    size_hint_y: None
-                    height: self.texture_size[1]
-                    halign: 'left'
+                    font_size: sp(30)
+                    color: dark_color
+                    halign: 'center'
+                    valign: 'middle'
                     text_size: self.size
 
+                Label:
+                    text: root.first_name
+                    font_name: "screens/fonts/Valekon.otf"
+                    font_size: sp(40)
+                    color: primary_color
+                    bold: True
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Widget:
+                size_hint_y: None
+                height: dp(24)
+
+            ReportSideNavItem:
+                icon_source: "screens/icons/dashboard.png"
+                label_text: "Home"
+                on_press: app.root.current = "dashboard"
+
+            ReportSideNavItem:
+                icon_source: "screens/icons/reports.png"
+                label_text: "Reports"
+                on_press: app.root.current = "report_dashboard"
+
+            ReportSideNavItem:
+                icon_source: "screens/icons/profile.png"
+                label_text: "Profile"
+                on_press: app.root.current = "profile"
+
+            Widget:
+                size_hint_y: 1
+
+            Widget:
+                size_hint_y: None
+                height: dp(2)
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.80
+            padding: dp(28), dp(18), dp(28), dp(24)
+
+            canvas.before:
+                Color:
+                    rgba: primary_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(22), 0, 0, dp(22)]
+
+            AnchorLayout:
+                anchor_x: 'left'
+                anchor_y: 'top'
+                padding: dp(10), dp(20), 0, 0
+
                 BoxLayout:
-                    id: meals_list
                     orientation: 'vertical'
-                    spacing: dp(10)
-                    size_hint_y: None
-                    height: self.minimum_height
+                    spacing: dp(20)
+                    padding: 0, dp(2), 0, dp(10)
+                    size_hint_y: 1
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(100)
+                        spacing: dp(14)
+
+                        ReportImageButton:
+                            source: "screens/icons/reports.png"
+                            size: dp(90), dp(90)
+                            on_press: app.root.current = "dashboard"
+                            valign: 'middle'
+
+                        Label:
+                            text: "Reports"
+                            font_name: "screens/fonts/Valekon.otf"
+                            font_size: sp(70)
+                            color: dark_color
+                            bold: True
+                            halign: 'left'
+                            valign: 'bottom'
+                            text_size: self.size
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: 1
+                        spacing: dp(12)
+
+                        ScrollView:
+                            do_scroll_x: False
+                            bar_width: dp(12)
+                            bar_color: (0.74, 0.82, 0.42, 1)
+                            bar_inactive_color: (0.93, 0.93, 0.93, 1)
+                            effect_cls: 'ScrollEffect'
+
+                            GridLayout:
+                                id: meals_list
+                                cols: 3
+                                spacing: dp(26)
+                                padding: dp(6), dp(10)
+                                size_hint_y: None
+                                height: self.minimum_height
+                                row_default_height: dp(188)
+                                row_force_default: True
+                                col_default_width: dp(235)
+                                col_force_default: True
+                        
+
+<ReportSideNavItem@ButtonBehavior+BoxLayout>:
+    icon_source: ""
+    label_text: ""
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(72)
+    spacing: dp(14)
+    padding: dp(10), dp(8)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 0
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+    Image:
+        source: root.icon_source
+        size_hint: None, None
+        size: dp(42), dp(42)
+        allow_stretch: True
+        keep_ratio: True
+        pos_hint: {'center_y': 0.5}
+    Label:
+        text: root.label_text
+        font_name: "screens/fonts/Valekon.otf"
+        font_size: sp(28)
+        color: dark_color
+        bold: True
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+
+<ReportImageButton@ButtonBehavior+Image>:
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(50), dp(50)
+
