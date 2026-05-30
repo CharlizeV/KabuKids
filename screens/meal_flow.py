@@ -725,6 +725,19 @@ class SessionPage(Screen):
                     Logger.info("Kabu: requesting LLM response")
                     reply = llm.get_kabu_response(f"The child said: \"{user_text}\". Observed emotion(s): {emotion_str}.")
                     parsed = utils.parse_kabu_reply(reply)
+
+                    # Extract topic using robust function
+                    topic_val = utils.extract_topic_robust(reply)
+                    if not topic_val:
+                        topic_val = parsed.get('topic')
+                    
+                    # Clean display format
+                    print("\n" + "="*80)
+                    print(f"Topic: {topic_val if topic_val else 'Not detected'}")
+                    print(f"What is Kabu Saying: {parsed['text']}")
+                    print(f"What did Kabu Hear me Say: {user_text}")
+                    print("="*80 + "\n")
+
                     Logger.info("Kabu: LLM returned")
                     
                     self.full_transcript.append({"speaker": "kabu", 
