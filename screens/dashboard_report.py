@@ -252,9 +252,29 @@ class ReportPage(Screen):
     portion_after_source = StringProperty("")
     formatted_ingredient_suggestions = StringProperty("")
     formatted_conversation_suggestions = StringProperty("")
+    first_name = StringProperty("User")
+
+    def _derive_first_name(self, value):
+        if not value:
+            return "User"
+        first = str(value).strip().split()
+        return first[0] if first else "User"
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
+        current_user = getattr(app, "current_user", None)
+        if current_user:
+            try:
+                if isinstance(current_user, dict):
+                    name = current_user.get("name") or current_user.get("username") or "User"
+                else:
+                    name = getattr(current_user, "name", None) or getattr(current_user, "username", "User")
+            except Exception:
+                name = "User"
+            self.first_name = self._derive_first_name(name)
+        else:
+            self.first_name = "User"
+
         try:
             meal_id = app.selected_meal_id
             Logger.info(f"ReportPage: on_pre_enter meal_id={meal_id}")

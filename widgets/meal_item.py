@@ -13,61 +13,63 @@ class MealItem(BoxLayout):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
         self.size_hint = (None, None)
-        self.size = (dp(235), dp(188))
+        self.size = (dp(300), dp(200))
         self.size_hint_y = None
-        self.height = dp(188)
-        self.padding = (dp(18), dp(16))
-        self.spacing = dp(10)
+        self.height = dp(200)
+        self.padding = (dp(20), dp(18))
+        self.spacing = dp(12)
         with self.canvas.before:
             Color(0.71, 0.76, 0.45, 1)
             self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[dp(10)])
         self.bind(pos=self._update_rect, size=self._update_rect)
 
-        info_layout = BoxLayout(orientation='vertical', spacing=dp(8))
-        info_layout.add_widget(Label(
+        info_layout = BoxLayout(orientation='vertical', spacing=dp(8), padding=(0, dp(20), 0, 0))
+
+        date_label = Label(
             text=date,
             font_name="screens/fonts/Valekon.otf",
-            font_size=sp(22),
+            font_size=sp(24),
             color=DARK_COLOR,
             bold=True,
             halign='left',
             valign='middle',
-            text_size=(dp(190), None),
+            text_size=(dp(216), None),
             size_hint_y=None,
-            height=dp(38),
-        ))
+            height=dp(30),
+        )
+        date_label.bind(texture_size=lambda instance, size: setattr(instance, 'height', size[1]))
+        info_layout.add_widget(date_label)
         time_text = f"{start_time} - {end_time}" if start_time and end_time else (start_time or end_time or "")
         info_layout.add_widget(Label(
             text=time_text,
-            font_name="screens/fonts/Valekon.otf",
             font_size=sp(15),
-            color=LIGHT_COLOR,
+            color=PRIMARY_COLOR,
             halign='left',
             valign='middle',
-            text_size=(dp(190), None),
+            text_size=(dp(216), None),
             size_hint_y=None,
-            height=dp(28),
+            height=dp(30),
         ))
         info_layout.add_widget(BoxLayout())
         self.add_widget(info_layout)
 
         more_btn = Button(
             text="View More",
-            size_hint_x=None,
-            width=dp(120),
-            height=dp(20),
+            size_hint=(None, None),
+            width=dp(100),
+            height=dp(28),
             background_normal='',
             background_down='',
             background_color=(0, 0, 0, 0),
             color=DARK_COLOR,
             font_name="screens/fonts/Valekon.otf",
-            font_size=sp(17),
+            font_size=sp(14),
             bold=True,
             pos_hint={'right': 1},
         )
         with more_btn.canvas.before:
             Color(0.95, 0.82, 0.35, 1)
-            more_btn.bg_rect = RoundedRectangle(pos=more_btn.pos, size=more_btn.size, radius=[dp(12)])
+            more_btn.bg_rect = RoundedRectangle(pos=more_btn.pos, size=more_btn.size, radius=[dp(8)])
         more_btn.bind(pos=self._update_button_rect, size=self._update_button_rect)
         more_btn.bind(on_press=self.go_to_report)
         self.add_widget(more_btn)
