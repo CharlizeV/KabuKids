@@ -14,6 +14,7 @@ from datetime import datetime
 from kivy.properties import StringProperty
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
@@ -590,34 +591,108 @@ class TranscriptPage(Screen):
         When submitted, append formatted entry to user's 'dislikes' in DB:
             (reason(s)) - "message_text"
         """
-        content = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(12))
+        panel = BoxLayout(orientation='vertical', size_hint=(1, None), height=dp(480), padding=[dp(22), dp(14), dp(22), dp(22)], spacing=dp(10))
+        with panel.canvas.before:
+            from kivy.graphics import Color, RoundedRectangle
+            Color(rgba=PRIMARY_COLOR)
+            panel._bg = RoundedRectangle(pos=panel.pos, size=panel.size, radius=[dp(16)] * 4)
+
+        def _sync_panel(*_args):
+            panel._bg.pos = panel.pos
+            panel._bg.size = panel.size
+
+        panel.bind(pos=_sync_panel, size=_sync_panel)
 
         title = Label(
             text="What do you dislike about this response?",
-            font_size='16sp',
-            halign='left',
+            font_name="screens/fonts/Valekon.otf",
+            font_size=sp(24),
+            bold=True,
             color=DARK_COLOR,
             size_hint_y=None,
-            height=dp(40)
+            height=dp(30),
+            halign='left',
+            valign='middle'
         )
-        title.bind(width=lambda w, width: setattr(title, 'text_size', (width - dp(40), None)))
-        content.add_widget(title)
+        title.bind(width=lambda inst, width: setattr(inst, 'text_size', (width - dp(10), None)))
+        panel.add_widget(title)
 
         options = ["Ineffective", "Distracting", "Doesn't relate to interest", "Other"]
         check_items = []
         for opt in options:
-            row = BoxLayout(size_hint_y=None, height=dp(32), spacing=dp(8))
-            cb = CheckBox(size_hint_x=None, width=dp(30), height=dp(30))
-            lbl = Label(text=opt, font_size='14sp', halign='left', size_hint_x=1, height=dp(30))
-            lbl.color = DARK_COLOR
-            lbl.bind(width=lambda w, width: setattr(lbl, 'text_size', (width - dp(40), None)))
-            row.add_widget(cb)
+            row = BoxLayout(size_hint_y=None, height=dp(48), spacing=dp(14))
+
+            check_holder = BoxLayout(size_hint=(None, None), size=(dp(38), dp(38)))
+            with check_holder.canvas.before:
+                from kivy.graphics import Color, RoundedRectangle
+                Color(rgba=(1, 1, 1, 1))
+                check_holder._bg = RoundedRectangle(pos=check_holder.pos, size=check_holder.size, radius=[dp(10)] * 4)
+
+            def _sync_check_holder(inst, *_args):
+                inst._bg.pos = inst.pos
+                inst._bg.size = inst.size
+
+            check_holder.bind(pos=_sync_check_holder, size=_sync_check_holder)
+
+            cb = CheckBox(size_hint=(None, None), size=(dp(34), dp(34)), pos_hint={'center_x': 0.5, 'center_y': 0.5})
+            check_holder.add_widget(cb)
+
+            lbl = Label(
+                text=opt,
+                font_name="screens/fonts/Valekon.otf",
+                font_size=sp(17),
+                color=(0, 0, 0, 1),
+                halign='left',
+                valign='middle',
+                size_hint_x=1,
+            )
+            lbl.bind(width=lambda inst, width: setattr(inst, 'text_size', (width, None)))
+
+            row.add_widget(check_holder)
             row.add_widget(lbl)
-            content.add_widget(row)
+            panel.add_widget(row)
             check_items.append((cb, opt))
 
-        other = TextInput(hint_text="Specify other...", size_hint_y=None, height=dp(40))
-        content.add_widget(other)
+        other = TextInput(
+            hint_text="Add text",
+            multiline=True,
+            size_hint_y=None,
+            height=dp(96),
+            background_normal='',
+            background_active='',
+            background_color=(1, 1, 1, 1),
+            foreground_color=(0.4, 0.4, 0.4, 1),
+            hint_text_color=(0.75, 0.75, 0.75, 1),
+            padding=[dp(16), dp(14), dp(16), dp(14)]
+        )
+        panel.add_widget(other)
+
+        button_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(12))
+
+        add_btn = Button(
+            text="ADD",
+            font_name="screens/fonts/Valekon.otf",
+            font_size=sp(24),
+            bold=True,
+            background_normal='',
+            background_down='',
+            background_color=(0.48, 0.58, 0.25, 1),
+            color=(1, 1, 1, 1)
+        )
+        cancel_btn = Button(
+            text="CANCEL",
+            font_name="screens/fonts/Valekon.otf",
+            font_size=sp(21),
+            bold=True,
+            background_normal='',
+            background_down='',
+            background_color=(0.91, 0.83, 0.42, 1),
+            color=(1, 1, 1, 1)
+        )
+
+        button_row.add_widget(add_btn)
+        button_row.add_widget(cancel_btn)
+        panel.add_widget(button_row)
 
         def on_submit(btn, popup):
             selected = [opt for cb, opt in check_items if cb.active]
@@ -657,9 +732,18 @@ class TranscriptPage(Screen):
             popup.dismiss()
             Popup(title="", content=Label(text="Thanks for the feedback.", color=DARK_COLOR), size_hint=(0.6,0.3)).open()
 
-        submit = Button(text="Submit", size_hint_y=None, height=dp(44))
-        popup = Popup(title='', content=content, size_hint=(0.86, 0.62))
-        submit.bind(on_press=lambda btn: on_submit(btn, popup))
-        content.add_widget(submit)
+        content = AnchorLayout(anchor_x='center', anchor_y='center')
+        content.add_widget(panel)
+
+        popup = Popup(
+            title='',
+            content=content,
+            size_hint=(0.78, 0.78),
+            separator_height=0,
+            background='',
+            background_color=(0, 0, 0, 0)
+        )
+        add_btn.bind(on_press=lambda btn: on_submit(btn, popup))
+        cancel_btn.bind(on_press=lambda btn: popup.dismiss())
         popup.open()
         self.popup = popup
