@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Environment variables - NEVER commit API keys!
 .env
 
@@ -39,3 +40,6 @@ Thumbs.db
 
 # Logs
 *.log
+=======
+mainsession/__pycache__/config.cpython-312.pyc
+>>>>>>> Stashed changes

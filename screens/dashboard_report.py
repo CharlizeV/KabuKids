@@ -7,7 +7,7 @@ import uuid
 from widgets.meal_item import MealItem
 from services.models import SAMPLE_REPORTS, fetch_reports_for_user
 from db import meals_col, db
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
 from datetime import datetime
 
 # Kivy properties and app/widget classes used in this file
@@ -26,6 +26,7 @@ from colors import DARK_COLOR, LIGHT_COLOR, ACCENT_COLOR, PRIMARY_COLOR, SECONDA
 
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
+from kivy.uix.widget import Widget
 
 # simple tappable image widget
 class ImageButton(ButtonBehavior, Image):
@@ -128,7 +129,6 @@ class DashboardPage(Screen):
                 # ensure food arrays exist
                 rep["food_before_meal"] = rep.get("food_before_meal") or []
                 rep["food_after_meal"] = rep.get("food_after_meal") or []
-
                 normalized[rep["_id"]] = rep
 
             # FILTER: keep only reports that belong to this user_id
@@ -322,12 +322,227 @@ class ReportPage(Screen):
         self.formatted_ingredient_suggestions = "\n".join([f"• {s}" for s in data["ingredient_suggestions"]])
         self.formatted_conversation_suggestions = "\n".join([f'• "{s}"' for s in data["conversation_suggestions"]])
 class TranscriptPage(Screen):
+    # expose header text used by transcript.kv
+    meal_date_text = StringProperty("")
+    meal_time_text = StringProperty("")
+    first_name = StringProperty("User")
+
+    def _derive_first_name(self, value):
+        if not value:
+            return "User"
+        first = str(value).strip().split()
+        return first[0] if first else "User"
+
+    def _format_message_time(self, value):
+        if not value:
+            return ""
+        if isinstance(value, datetime):
+            return f"({value.strftime('%I:%M%p').lstrip('0')})"
+
+        text = str(value).strip()
+        for fmt in (
+            "%Y-%m-%dT%H:%M:%S.%fZ",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%dT%H:%M:%S.%f",
+            "%Y-%m-%dT%H:%M:%S",
+            "%I:%M %p",
+            "%I:%M%p",
+        ):
+            try:
+                dt = datetime.strptime(text, fmt)
+                return f"({dt.strftime('%I:%M%p').lstrip('0')})"
+            except Exception:
+                continue
+
+        # If the value already looks like a time, clean common ISO leftovers.
+        if "T" in text:
+            text = text.split("T", 1)[-1]
+        text = text.replace("+00:00", "").replace("Z", "")
+        return f"({text})" if text else ""
+
+    def _plain_emotion(self, emotion):
+        if emotion is None:
+            return ""
+        text = str(emotion).strip()
+        text = text.strip("[]").strip("'").strip('"')
+        return text
+
+    def _get_user_photo_source(self):
+        app = App.get_running_app()
+        current_user = getattr(app, "current_user", None)
+
+        source = ""
+        if current_user:
+            try:
+                if isinstance(current_user, dict):
+                    source = current_user.get("profile_picture", "") or ""
+                else:
+                    source = getattr(current_user, "profile_picture", "") or ""
+            except Exception:
+                source = ""
+
+        if not source:
+            source = getattr(app, "profile_image_path", "") or ""
+
+        return source
+
+    def _make_avatar(self, source, bg_rgba):
+        avatar = BoxLayout(size_hint=(None, None), size=(dp(56), dp(56)))
+        with avatar.canvas.before:
+            from kivy.graphics import Color, Ellipse
+            Color(rgba=bg_rgba)
+            avatar._ellipse = Ellipse(pos=avatar.pos, size=avatar.size)
+
+        def _sync_avatar(*_args):
+            avatar._ellipse.pos = avatar.pos
+            avatar._ellipse.size = avatar.size
+
+        avatar.bind(pos=_sync_avatar, size=_sync_avatar)
+        image_source = source or self._get_user_photo_source() or "screens/icons/user.png"
+        avatar.add_widget(Image(source=image_source, allow_stretch=True, keep_ratio=True))
+        return avatar
+
+    def _make_message_row(self, role, text, emotion, time_text):
+        role_text = str(role).strip().lower()
+        is_kabu = role_text == "kabu" or role_text == "assistant" or role_text == "bot"
+
+        row = BoxLayout(size_hint_y=None, height=dp(92), spacing=dp(12), padding=[0, dp(2), 0, dp(2)])
+
+        spacer_left = Widget(size_hint_x=1)
+        spacer_right = Widget(size_hint_x=1)
+
+        bubble = BoxLayout(
+            orientation='vertical',
+            size_hint=(None, None),
+            width=dp(520),
+            padding=[dp(14), dp(10), dp(14), dp(10)],
+            spacing=dp(2),
+        )
+        bubble_bg = SECONDARY_COLOR if not is_kabu else (0.98, 0.95, 0.86, 1)
+        with bubble.canvas.before:
+            from kivy.graphics import Color, RoundedRectangle
+            Color(rgba=bubble_bg)
+            bubble._bg = RoundedRectangle(pos=bubble.pos, size=bubble.size, radius=[dp(16)] * 4)
+
+        def _sync_bubble(*_args):
+            bubble._bg.pos = bubble.pos
+            bubble._bg.size = bubble.size
+
+        bubble.bind(pos=_sync_bubble, size=_sync_bubble)
+
+        header = BoxLayout(size_hint_y=None, height=dp(30), spacing=dp(4))
+        name = "Kabu" if is_kabu else self.first_name or "User"
+        name_label = Label(
+            text=name,
+            font_name="screens/fonts/Valekon.otf",
+            font_size=sp(28),
+            bold=True,
+            color=DARK_COLOR,
+            size_hint_x=None,
+            halign='left',
+            valign='middle',
+        )
+        name_label.bind(texture_size=lambda inst, ts: setattr(inst, 'width', inst.texture_size[0] + dp(4)))
+
+        time_label = Label(
+            text=time_text,
+            font_size=sp(18),
+            color=DARK_COLOR,
+            size_hint_x=None,
+            halign='left',
+            valign='middle',
+        )
+        time_label.bind(texture_size=lambda inst, ts: setattr(inst, 'width', inst.texture_size[0] + dp(4)))
+
+        header.add_widget(name_label)
+        if time_text:
+            header.add_widget(time_label)
+        if is_kabu:
+            # put the icon inside a fixed-size container to ensure the visual size is constrained
+            icon_container = BoxLayout(size_hint=(None, None), size=(dp(25), dp(25)), pos_hint={'center_y': 0.50})
+            dislike_btn = ImageButton(
+                source="screens/icons/dislike.png",
+                size_hint=(1, 1),
+                allow_stretch=True,
+                keep_ratio=False,
+            )
+            dislike_btn.bind(on_press=lambda inst, m=text: self.open_dislike_popup(m))
+            icon_container.add_widget(dislike_btn)
+            header.add_widget(icon_container)
+            # force texture reload so Kivy updates the scaled texture for the smaller widget size
+            try:
+                dislike_btn.reload()
+            except Exception:
+                pass
+        header.add_widget(Widget())
+
+        emotion_text = self._plain_emotion(emotion)
+        emotion_label = Label(
+            text=emotion_text,
+            font_size=sp(16),
+            color=DARK_COLOR,
+            size_hint_y=None,
+            size_hint_x=1,
+            height=dp(20),
+            halign='left',
+            valign='middle',
+        )
+        # keep emotion left-aligned by setting its text_size to its width
+        emotion_label.bind(
+            width=lambda inst, w: setattr(inst, 'text_size', (w - dp(6), None)),
+            texture_size=lambda inst, ts: setattr(inst, 'height', max(dp(20), inst.texture_size[1]))
+        )
+
+        message_label = Label(
+            text=text,
+            font_size=sp(20),
+            color=DARK_COLOR,
+            halign='left',
+            valign='top',
+            size_hint_y=None,
+        )
+        message_label.bind(
+            width=lambda inst, w: setattr(inst, 'text_size', (w - dp(6), None)),
+            texture_size=lambda inst, size: setattr(inst, 'height', size[1]),
+        )
+
+        bubble.add_widget(header)
+        if emotion_text:
+            bubble.add_widget(emotion_label)
+        bubble.add_widget(message_label)
+        bubble.bind(minimum_height=bubble.setter('height'))
+
+        if is_kabu:
+            row.add_widget(self._make_avatar('screens/icons/logo.PNG', (0.98, 0.93, 0.55, 1)))
+            row.add_widget(bubble)
+            row.add_widget(spacer_right)
+        else:
+            row.add_widget(spacer_left)
+            row.add_widget(bubble)
+            row.add_widget(self._make_avatar(self._get_user_photo_source(), (0.73, 0.79, 0.45, 1)))
+
+        row.bind(minimum_height=row.setter('height'))
+        return row
+
     def on_pre_enter(self, *args):
         content = self.ids.transcript_content
         content.clear_widgets()
 
         app = App.get_running_app()
         meal_id = getattr(app, 'selected_meal_id', None)
+
+        current_user = getattr(app, "current_user", None)
+        if current_user:
+            try:
+                if isinstance(current_user, dict):
+                    name = current_user.get("name") or current_user.get("username") or "User"
+                else:
+                    name = getattr(current_user, "name", None) or getattr(current_user, "username", "User")
+            except Exception:
+                name = "User"
+            self.first_name = self._derive_first_name(name)
+        else:
+            self.first_name = "User"
 
         if not meal_id or meal_id not in SAMPLE_REPORTS:
             error = Label(
@@ -348,114 +563,27 @@ class TranscriptPage(Screen):
             return
 
         report = SAMPLE_REPORTS.get(meal_id, {})
+        # set header properties so KV can display the meal's date/time
+        self.meal_date_text = report.get("date", "")
+        start_time = report.get("start_time", "")
+        end_time = report.get("end_time", "")
+        if start_time and end_time:
+            self.meal_time_text = f"{start_time} - {end_time}"
+        else:
+            self.meal_time_text = start_time or end_time or ""
         for msg in report.get("transcript", []):
-            role = msg["speaker"]
-            text = msg["text"]
-            emotion = msg.get("emotion", "neutral")
+            role = msg.get("speaker", "child")
+            text = msg.get("text", "")
+            emotion = msg.get("emotion", "")
 
-            # Message container
-            msg_box = BoxLayout(
-                orientation='vertical',
-                size_hint_y=None,
-                size_hint_x=1,
-                height=dp(10),
-                padding=[0, 0, 0, dp(10)]
-            )
-
-            # Speaker label
-            # Build header row: "Speaker (11:00 AM):" + optional dislike button on the right
-            # try to find a time field in the message (supports several keys)
             time_val = None
             for time_key in ("time", "timestamp", "time_str", "created_at"):
-                if time_key in msg and msg[time_key]:
-                    time_val = msg[time_key]
+                if msg.get(time_key):
+                    time_val = msg.get(time_key)
                     break
-            # simple formatting for datetime objects; otherwise use string as-is
-            if isinstance(time_val, datetime):
-                time_str = time_val.strftime("%I:%M %p").lstrip("0")
-            else:
-                time_str = str(time_val) if time_val else ""
 
-            speaker_text = ("Kabu" if role == "kabu" else "Child")
-            if time_str:
-                speaker_text = f"{speaker_text} ({time_str}):"
-            else:
-                speaker_text = f"{speaker_text}:"
-
-            # Make label size to its content so the dislike button can sit right after it
-            header_row = BoxLayout(size_hint_y=None, height=dp(20), spacing=dp(6))
-            speaker_label = Label(
-                text=speaker_text,
-                font_size='16sp',
-                bold=True,
-                color=SECONDARY_COLOR,
-                halign='left',
-                valign='middle',
-                size_hint_x=None,
-                size_hint_y=None,
-                height=dp(20)
-            )
-            # size label to its texture width so it doesn't expand and push the button away
-            speaker_label.bind(texture_size=lambda inst, ts: setattr(inst, 'width', inst.texture_size[0] + dp(4)))
-            speaker_label.bind(texture_size=lambda inst, ts: setattr(inst, 'height', max(dp(20), inst.texture_size[1])))
-            header_row.add_widget(speaker_label)
- 
-             # Emotion label
-            emotion_label = Label(
-                text=f"[{emotion}]",
-                color=LIGHT_COLOR,
-                font_size='12sp',
-                halign='left',
-                valign='top',
-                size_hint_x=1,
-                size_hint_y=None,
-                height=dp(16)
-            )
-            emotion_label.bind(
-                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
-                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
-            )
-
-            # Message text
-            msg_label = Label(
-                text=text,
-                font_size='16sp',
-                color=DARK_COLOR,
-                halign='left',
-                valign='top',
-                size_hint_x=1,
-                size_hint_y=None,
-                height=dp(30)
-            )
-            msg_label.bind(
-                width=lambda inst, w: setattr(inst, 'text_size', (w - dp(20), None)),
-                texture_size=lambda inst, size: setattr(inst, 'height', size[1])
-            )
- 
-            # add header (speaker + optional dislike button), emotion, message
-            # place dislike button into header_row so it aligns with speaker/time
-            if role == "kabu":
-                dislike_btn = ImageButton(
-                    source="screens/icons/dislike.png",
-                    size_hint_x=None,
-                    size_hint_y=0.4,
-                    width=dp(15),
-                    height=dp(15),
-                    allow_stretch=True,
-                    keep_ratio=True
-                )
-                dislike_btn.bind(on_press=lambda inst, m=text: self.open_dislike_popup(m))
-                # add image-button immediately after label (left side)
-                header_row.add_widget(dislike_btn)
-            # spacer to push nothing to the right (keeps left alignment)
-            header_row.add_widget(BoxLayout())
-            msg_box.add_widget(header_row)
-            msg_box.add_widget(emotion_label)
-            msg_box.add_widget(msg_label)
- 
-            # Auto height
-            msg_box.bind(minimum_height=msg_box.setter('height'))
-            content.add_widget(msg_box)
+            time_text = self._format_message_time(time_val)
+            content.add_widget(self._make_message_row(role, text, emotion, time_text))
 
     def open_dislike_popup(self, message_text):
         """Open popup asking why user dislikes this specific response.
