@@ -14,6 +14,7 @@ from kivy.graphics import Color, Rectangle
 
 class ProfilePage(Screen):
     # values bound to KV
+    first_name = StringProperty("User")
     display_name = StringProperty("")
     username_text = StringProperty("")
     birthday_text = StringProperty("")
@@ -31,6 +32,7 @@ class ProfilePage(Screen):
         if user:
             if isinstance(user, dict):
                 self.display_name = user.get("name") or ""
+                self.first_name = (self.display_name.split()[0] if self.display_name.strip() else "User")
                 self.username_text = user.get("username") or ""
                 self.birthday_text = user.get("birthday") or ""
                 self.gender_text = user.get("gender") or ""
@@ -41,6 +43,7 @@ class ProfilePage(Screen):
             else:
                 # fallback for object-like user
                 self.display_name = getattr(user, "name", "") or ""
+                self.first_name = (self.display_name.split()[0] if self.display_name.strip() else "User")
                 self.username_text = getattr(user, "username", "") or ""
                 self.birthday_text = getattr(user, "birthday", "") or ""
                 self.gender_text = getattr(user, "gender", "") or ""
@@ -61,6 +64,7 @@ class ProfilePage(Screen):
                 self.profile_image_source = getattr(app, "profile_image_path", "") or ""
         else:
             # no user — clear everything
+            self.first_name = "User"
             self.display_name = ""
             self.username_text = ""
             self.birthday_text = ""

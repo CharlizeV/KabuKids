@@ -3,11 +3,12 @@
 #:import primary_color colors.PRIMARY_COLOR
 #:import dark_color colors.DARK_COLOR
 #:import light_color colors.LIGHT_COLOR
-#:import super_light colors.SUPER_LIGHT
 #:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 
 <ProfilePage>:
     name: "profile"
+
     canvas.before:
         Color:
             rgba: secondary_color
@@ -16,267 +17,326 @@
             size: self.size
 
     BoxLayout:
-        orientation: 'vertical'
-        padding: [0, 0, 0, 0]  # [left, top, right, bottom]
-        spacing: 40
+        orientation: 'horizontal'
 
-        # --- Dashboard, Profile, Edit ---
-        GridLayout:
-            padding: [10, 10, 10, 10]  # [left, top, right, bottom]
-            cols: 3
-            size_hint_y: None
-            height: 60  # Fixed header height
-
-            # Left square (aligned left)
-            ImageButton:
-                source: "screens/icons/return.png"
-                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                on_press: app.root.current = "dashboard"
-
-            # Center text
-            Label:
-                text: "Profile"
-                font_name: "screens/fonts/Valekon.otf"
-                font_size: 20
-                color: primary_color
-                halign: 'center'
-                valign: 'middle'  
-                text_size: self.size  # ← critical for alignment!
-
-            # Right square 
-            ImageButton:
-                source: "screens/icons/edit.png"
-                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                on_press: app.root.current = "editProfile"
-
-        # --- Add a Placeholder for Profile Content ---
         BoxLayout:
             orientation: 'vertical'
-            halign: 'center'
-            size_hint_y: None
-            height: 180
-            spacing: 10
+            size_hint_x: 0.25
+            padding: dp(24), dp(22), dp(20), dp(22)
+            spacing: dp(16)
 
-            # Profile picture (clipped circle)
-            StencilView:
+            Widget:
+                size_hint_y: 1
+
+            Image:
+                source: "screens/icons/logo.PNG"
                 size_hint: None, None
-                size: 120, 120
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                canvas.before:
-                    Color:
-                        rgba: 0.9, 0.9, 0.9, 1
-                    Ellipse:
-                        pos: self.pos
-                        size: self.size
+                size: dp(250), dp(250)
+                allow_stretch: True
+                keep_ratio: True
+                pos_hint: {"center_x": 0.5}
 
-                Image:
-                    id: profile_image
-                    source: root.profile_image_source
-                    size_hint: None, None
-                    size: self.parent.size
-                    pos: self.parent.pos
-                    allow_stretch: True
-                    keep_ratio: False
-
-            Label:
-                text: root.display_name
-                font_name: "screens/fonts/Valekon.otf"
-                halign: 'center'
-                font_size: 30
-                color: primary_color
+            BoxLayout:
+                orientation: 'vertical'
                 size_hint_y: None
-                height: 40
+                height: dp(100)
+                spacing: dp(2)
 
-        ScrollView:
-            GridLayout:
-                cols: 1
+                Label:
+                    text: "Hi there,"
+                    font_name: "screens/fonts/Valekon.otf"
+                    font_size: sp(30)
+                    color: dark_color
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+                Label:
+                    text: root.first_name
+                    font_name: "screens/fonts/Valekon.otf"
+                    font_size: sp(40)
+                    color: primary_color
+                    bold: True
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Widget:
                 size_hint_y: None
-                height: self.minimum_height
-                padding: [40, 20, 40, 20]
-                canvas.before:
-                    Color:
-                        rgba: primary_color
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [dp(20), dp(20), dp(0), dp(0)]
+                height: dp(24)
 
-                GridLayout:
-                    cols: 2
-                    size_hint_y: None
-                    height: self.minimum_height
-                    spacing: 10
+            ProfileSideNavItem:
+                icon_source: "screens/icons/dashboard.png"
+                label_text: "Home"
+                on_press: app.root.current = "dashboard"
 
-                    Label:
-                        text: "Username"
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: secondary_color
-                        size_hint_y: None
-                        height: 30
+            ProfileSideNavItem:
+                icon_source: "screens/icons/reports.png"
+                label_text: "Reports"
+                on_press: app.root.current = "report_dashboard"
 
-                    Label:
-                        text: root.username_text
-                        halign: 'right'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: light_color
-                        size_hint_y: None
-                        height: 30
+            ProfileSideNavItem:
+                icon_source: "screens/icons/profile.png"
+                label_text: "Profile"
+                on_press: app.root.current = "profile"
 
-                    Label:
-                        text: "Birthday"
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: secondary_color
-                        size_hint_y: None
-                        height: 30
+            Widget:
+                size_hint_y: 1
 
-                    Label:
-                        text: root.birthday_text
-                        halign: 'right'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: light_color
-                        size_hint_y: None
-                        height: 30
+            Widget:
+                size_hint_y: None
+                height: dp(2)
 
-                    Label:
-                        text: "Gender"
-                        bold: True
-                        halign: 'left'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: secondary_color
-                        size_hint_y: None
-                        height: 30
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.80
+            padding: dp(28), dp(18), dp(28), dp(24)
 
-                    Label:
-                        text: root.gender_text
-                        halign: 'right'
-                        valign: 'middle'
-                        text_size: self.size
-                        font_size: 20
-                        color: light_color
-                        size_hint_y: None
-                        height: 30
+            canvas.before:
+                Color:
+                    rgba: primary_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(22), 0, 0, dp(22)]
 
-                # Likes header and dynamic container
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
-
-                Label:
-                    text: "My Likes"
-                    font_name: "screens/fonts/Valekon.otf"
-                    font_size: 25
-                    size_hint_y: None
-                    height: 40
-                    color: secondary_color
-                
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
+            AnchorLayout:
+                anchor_x: 'left'
+                anchor_y: 'top'
+                padding: dp(10), dp(80), 0, 0
 
                 BoxLayout:
-                    id: likes_container
                     orientation: 'vertical'
+                    spacing: dp(16)
+                    padding: 0, dp(2), 0, dp(10)
                     size_hint_y: None
                     height: self.minimum_height
-                    padding: [20, 10]
-                    spacing: 6
-                    color: dark_color
-                    canvas.before:
-                        Color:
-                            rgba: super_light
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(8), dp(8), dp(8), dp(8)]
 
-                # Dislikes
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(200)
+                        spacing: dp(18)
+                        padding: 0, 0, 0, dp(20)
 
-                Label:
-                    text: "My Dislikes"
-                    font_size: 25
-                    font_name: "screens/fonts/Valekon.otf"
-                    size_hint_y: None
-                    height: 40
-                    color: secondary_color
-                
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_x: 1
+                            spacing: dp(20)
 
-                BoxLayout:
-                    id: dislikes_container
-                    orientation: 'vertical'
-                    size_hint_y: None
-                    height: self.minimum_height
-                    padding: [20, 10]
-                    spacing: 6
-                    color: dark_color
-                    canvas.before:
-                        Color:
-                            rgba: super_light
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(8), dp(8), dp(8), dp(8)]
+                            Image:
+                                source: root.profile_image_source if root.profile_image_source else "screens/icons/logo.PNG"
+                                size_hint: None, None
+                                size: dp(200), dp(200)
+                                allow_stretch: True
+                                keep_ratio: True
+                                canvas.before:
+                                    Color:
+                                        rgba: secondary_color
+                                    Line:
+                                        ellipse: (self.x, self.y, self.width, self.height)
+                                        width: dp(2)
 
-                # Goals
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
+                            AnchorLayout:
+                                size_hint_x: 1
+                                anchor_x: 'left'
+                                anchor_y: 'center'
 
-                Label:
-                    text: "My Goals"
-                    font_name: "screens/fonts/Valekon.otf"
-                    font_size: 25
-                    size_hint_y: None
-                    height: 40
-                    color: secondary_color
+                                BoxLayout:
+                                    orientation: 'vertical'
+                                    spacing: dp(7)
+                                    size_hint_y: None
+                                    height: dp(85)
 
-                Label:
-                    text: ""
-                    size_hint_y: None
-                    height: 10
+                                    Label:
+                                        text: root.display_name + " (" + root.gender_text[:1] + ")"
+                                        font_name: "screens/fonts/Valekon.otf"
+                                        font_size: sp(45)
+                                        color: dark_color
+                                        bold: True
+                                        halign: 'left'
+                                        valign: 'middle'
+                                        text_size: self.width, None
+                                        size_hint_y: None
+                                        height: dp(40)
+                                        shorten: True
+                                        shorten_from: 'right'
 
-                BoxLayout:
-                    id: goals_container
-                    orientation: 'vertical'
-                    size_hint_y: None
-                    height: self.minimum_height
-                    padding: [20, 10]
-                    spacing: 6
-                    color: dark_color
-                    canvas.before:
-                        Color:
-                            rgba: super_light
-                        RoundedRectangle:
-                            pos: self.pos
-                            size: self.size
-                            radius: [dp(8), dp(8), dp(8), dp(8)]
+                                    Label:
+                                        text: root.birthday_text
+                                        font_size: sp(34)
+                                        color: dark_color
+                                        halign: 'left'
+                                        valign: 'middle'
+                                        text_size: self.width, None
+                                        size_hint_y: None
+                                        height: dp(30)
+                                    EditProfileButton:
+                                        on_press: app.root.current = "editProfile"
+                                        size: dp(30), dp(30)
 
-<ImageButton@ButtonBehavior+Image>:
+                        Widget:
+                            size_hint_x: 0.2
+
+                        LogOutButton:
+                            on_press: app.root.current = "login"
+                            size: dp(64), dp(64)
+
+                    GridLayout:
+                        cols: 3
+                        spacing: dp(14)
+                        size_hint_y: None
+                        height: dp(430)
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(10)
+
+                            Label:
+                                text: "Likes"
+                                font_name: "screens/fonts/Valekon.otf"
+                                font_size: sp(35)
+                                color: dark_color
+                                bold: True
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+                                size_hint_y: None
+                                height: dp(36)
+
+                            BoxLayout:
+                                orientation: 'vertical'
+                                padding: dp(10)
+                                canvas.before:
+                                    Color:
+                                        rgba: secondary_color
+                                    RoundedRectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                        radius: [dp(12), dp(12), dp(12), dp(12)]
+
+                                ScrollView:
+                                    do_scroll_x: False
+                                    BoxLayout:
+                                        id: likes_container
+                                        orientation: 'vertical'
+                                        size_hint_y: None
+                                        height: self.minimum_height
+                                        spacing: dp(4)
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(10)
+
+                            Label:
+                                text: "Dislikes"
+                                font_name: "screens/fonts/Valekon.otf"
+                                font_size: sp(35)
+                                color: dark_color
+                                bold: True
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+                                size_hint_y: None
+                                height: dp(36)
+
+                            BoxLayout:
+                                orientation: 'vertical'
+                                padding: dp(10)
+                                canvas.before:
+                                    Color:
+                                        rgba: secondary_color
+                                    RoundedRectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                        radius: [dp(12), dp(12), dp(12), dp(12)]
+
+                                ScrollView:
+                                    do_scroll_x: False
+                                    BoxLayout:
+                                        id: dislikes_container
+                                        orientation: 'vertical'
+                                        size_hint_y: None
+                                        height: self.minimum_height
+                                        spacing: dp(4)
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(10)
+
+                            Label:
+                                text: "Goals"
+                                font_name: "screens/fonts/Valekon.otf"
+                                font_size: sp(35)
+                                color: dark_color
+                                bold: True
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+                                size_hint_y: None
+                                height: dp(36)
+
+                            BoxLayout:
+                                orientation: 'vertical'
+                                padding: dp(10)
+                                canvas.before:
+                                    Color:
+                                        rgba: secondary_color
+                                    RoundedRectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                        radius: [dp(12), dp(12), dp(12), dp(12)]
+
+                                ScrollView:
+                                    do_scroll_x: False
+                                    BoxLayout:
+                                        id: goals_container
+                                        orientation: 'vertical'
+                                        size_hint_y: None
+                                        height: self.minimum_height
+                                        spacing: dp(4)
+
+<ProfileSideNavItem@ButtonBehavior+BoxLayout>:
+    icon_source: ""
+    label_text: ""
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(72)
+    spacing: dp(14)
+    padding: dp(10), dp(8)
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 0
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+    Image:
+        source: root.icon_source
+        size_hint: None, None
+        size: dp(42), dp(42)
+        allow_stretch: True
+        keep_ratio: True
+        pos_hint: {'center_y': 0.5}
+    Label:
+        text: root.label_text
+        font_name: "screens/fonts/Valekon.otf"
+        font_size: sp(28)
+        color: dark_color
+        bold: True
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+
+<EditProfileButton@ButtonBehavior+Image>:
+    source: "screens/icons/edit.png"
     allow_stretch: True
     keep_ratio: True
     size_hint: None, None
-    size: dp(50), dp(50)
+    size: dp(58), dp(58)
+
+<LogOutButton@ButtonBehavior+Image>:
+    source: "screens/icons/logout.png"
+    allow_stretch: True
+    keep_ratio: True
+    size_hint: None, None
+    size: dp(58), dp(58)
