@@ -10,7 +10,10 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.metrics import dp
 from kivy.app import App
-from kivy.graphics import Color, Rectangle
+from kivy.graphics import Color, Rectangle, RoundedRectangle
+from kivy.uix.spinner import Spinner
+from datetime import datetime
+from colors import DARK_COLOR
 
 class ProfilePage(Screen):
     # values bound to KV
@@ -116,37 +119,128 @@ class ProfilePage(Screen):
 
 class EditProfilePage(Screen):
     profile_data = StringProperty("")   # << add this
+    birthday_display_text = StringProperty("Select Birthday")
 
-    def remove_tag(self, tag_layout):
-        parent = tag_layout.parent
-        parent.remove_widget(tag_layout)
-        # Optional: update container height
-        parent.height = parent.minimum_height if parent.children else 40
+    def show_tag_warning(self, message):
+        content = BoxLayout(orientation="vertical", padding=dp(18), spacing=dp(12))
+        with content.canvas.before:
+            Color(0.74, 0.78, 0.45, 1)
+            content.bg = RoundedRectangle(pos=content.pos, size=content.size, radius=[dp(18),])
+        content.bind(pos=lambda obj, pos: setattr(obj.bg, 'pos', pos), size=lambda obj, size: setattr(obj.bg, 'size', size))
+
+        title = Label(
+            text="Warning !",
+            size_hint_y=None,
+            height=dp(70),
+            halign="left",
+            valign="middle",
+            color=(0.46, 0.57, 0.26, 1),
+            font_size=dp(44),
+            font_name="screens/fonts/Valekon.otf",
+            text_size=(0, None),
+        )
+        title.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
+        message_label = Label(
+            text=message,
+            halign="left",
+            valign="middle",
+            color=(0, 0, 0, 1),
+            font_size=dp(24),
+            text_size=(0, None),
+        )
+        message_label.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
+        content.add_widget(title)
+        content.add_widget(message_label)
+
+        Popup(
+            title="",
+            content=content,
+            size_hint=(0.76, 0.28),
+            auto_dismiss=True,
+            separator_height=0,
+            background="",
+            background_color=(0, 0, 0, 0),
+        ).open()
 
     def add_tag_prompt(self, section):
-        # Create input popup
-        content = BoxLayout(orientation='vertical', padding=dp(15), spacing=dp(10))
+        content = BoxLayout(orientation='vertical', padding=dp(18), spacing=dp(14))
+        with content.canvas.before:
+            Color(0.74, 0.78, 0.45, 1)
+            content.bg = RoundedRectangle(pos=content.pos, size=content.size, radius=[dp(18),])
+        content.bind(pos=lambda obj, pos: setattr(obj.bg, 'pos', pos), size=lambda obj, size: setattr(obj.bg, 'size', size))
+
+        title = Label(
+            text="Add Tag",
+            size_hint_y=None,
+            height=dp(34),
+            halign="left",
+            valign="middle",
+            color=(1, 1, 1, 1),
+            font_size=dp(22),
+            font_name="screens/fonts/Valekon.otf",
+            text_size=(0, None),
+        )
+        title.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
         text_input = TextInput(
             hint_text="Enter tag...",
-            font_size='16sp',
+            font_size='20sp',
             multiline=False,
             size_hint_y=None,
-            height=dp(40)
+            height=dp(60),
+            background_normal="",
+            background_active="",
+            background_color=(0.97, 0.97, 0.97, 1),
+            foreground_color=(0.12, 0.12, 0.12, 1),
+            cursor_color=(0.12, 0.12, 0.12, 1),
+            cursor_width=dp(2),
+            padding=(dp(14), dp(18)),
         )
-        btn_layout = BoxLayout(spacing=dp(10), size_hint_y=None, height=dp(40))
-        btn_submit = Button(text="Add")
-        btn_cancel = Button(text="Cancel")
+        btn_layout = BoxLayout(spacing=dp(14), size_hint_y=None, height=dp(56))
+        btn_submit = Button(
+            text="Add",
+            background_normal="",
+            background_color=(0.47, 0.60, 0.25, 1),
+            color=(1, 1, 1, 1),
+            font_name="screens/fonts/Valekon.otf",
+            font_size=dp(22),
+        )
+        btn_cancel = Button(
+            text="Cancel",
+            background_normal="",
+            background_color=(0.93, 0.84, 0.41, 1),
+            color=(1, 1, 1, 1),
+            font_name="screens/fonts/Valekon.otf",
+            font_size=dp(22),
+        )
         btn_layout.add_widget(btn_submit)
         btn_layout.add_widget(btn_cancel)
+        content.add_widget(title)
         content.add_widget(text_input)
         content.add_widget(btn_layout)
 
-        popup = Popup(title="Add Tag", content=content, size_hint=(0.7, 0.3))
+        popup = Popup(
+            title="",
+            content=content,
+            size_hint=(0.72, 0.34),
+            auto_dismiss=False,
+            separator_height=0,
+            background="",
+            background_color=(0, 0, 0, 0),
+        )
 
         def add_tag(instance):
             tag_text = text_input.text.strip()
-            if tag_text:
-                self.add_tag_to_section(section, tag_text)
+            if not tag_text:
+                return
+
+            if len(tag_text) > 32:
+                self.show_tag_warning("Tags cannot exceed 32 characters")
+                return
+
+            self.add_tag_to_section(section, tag_text)
             popup.dismiss()
 
         def cancel(instance):
@@ -156,25 +250,152 @@ class EditProfilePage(Screen):
         btn_cancel.bind(on_press=cancel)
         popup.open()
 
-    def add_tag_to_section(self, section, tag_text):
-        # Create tag widget
-        tag_box = BoxLayout(
+    def open_birthday_picker(self):
+        current = self.ids.birthday_input.text.strip() if "birthday_input" in self.ids else ""
+        today = datetime.now()
+
+        month_value, day_value, year_value = "01", "01", str(today.year)
+        if current:
+            parts = current.split("/")
+            if len(parts) == 3:
+                month_value, day_value, year_value = parts[0], parts[1], parts[2]
+
+        content = BoxLayout(orientation="vertical", padding=dp(20), spacing=dp(14))
+        with content.canvas.before:
+            Color(0.74, 0.78, 0.45, 1)
+            content.bg = RoundedRectangle(pos=content.pos, size=content.size, radius=[dp(18),])
+        content.bind(pos=lambda obj, pos: setattr(obj.bg, 'pos', pos), size=lambda obj, size: setattr(obj.bg, 'size', size))
+
+        title = Label(
+            text="Add Birthday",
             size_hint_y=None,
-            height=30,
-            spacing=5
+            height=dp(42),
+            font_name="screens/fonts/Valekon.otf",
+            font_size=dp(28),
+            color=DARK_COLOR,
+            halign="left",
+            valign="middle",
+            text_size=(0, None),
         )
-        tag_box.canvas.before.clear()
-        from kivy.graphics import Color, Rectangle
+        title.bind(width=lambda inst, width: setattr(inst, "text_size", (width, None)))
+
+        row = BoxLayout(size_hint_y=None, height=dp(60), spacing=dp(14))
+
+        month_spinner = Spinner(
+            text="Month" if month_value == "01" else month_value,
+            values=[f"{i:02d}" for i in range(1, 13)],
+            size_hint_x=0.33,
+            height=dp(56),
+            background_normal="",
+            background_color=(1, 1, 1, 1),
+            color=(0.1, 0.1, 0.1, 1),
+            font_size=dp(20),
+        )
+        day_spinner = Spinner(
+            text="Day" if day_value == "01" else day_value,
+            values=[f"{i:02d}" for i in range(1, 32)],
+            size_hint_x=0.33,
+            height=dp(56),
+            background_normal="",
+            background_color=(1, 1, 1, 1),
+            color=(0.1, 0.1, 0.1, 1),
+            font_size=dp(20),
+        )
+        year_spinner = Spinner(
+            text="Year" if year_value == str(today.year) else year_value,
+            values=[str(y) for y in range(today.year, 1900, -1)],
+            size_hint_x=0.34,
+            height=dp(56),
+            background_normal="",
+            background_color=(1, 1, 1, 1),
+            color=(0.1, 0.1, 0.1, 1),
+            font_size=dp(20),
+        )
+
+        row.add_widget(month_spinner)
+        row.add_widget(day_spinner)
+        row.add_widget(year_spinner)
+
+        buttons = BoxLayout(size_hint_y=None, height=dp(54), spacing=dp(14))
+        ok_button = Button(
+            text="ADD",
+            background_normal="",
+            background_color=(0.47, 0.60, 0.25, 1),
+            color=(1, 1, 1, 1),
+            font_name="screens/fonts/Valekon.otf",
+            font_size=dp(24),
+        )
+        cancel_button = Button(
+            text="CANCEL",
+            background_normal="",
+            background_color=(0.93, 0.84, 0.41, 1),
+            color=(1, 1, 1, 1),
+            font_name="screens/fonts/Valekon.otf",
+            font_size=dp(24),
+        )
+        buttons.add_widget(ok_button)
+        buttons.add_widget(cancel_button)
+
+        content.add_widget(title)
+        content.add_widget(row)
+        content.add_widget(buttons)
+
+        popup = Popup(
+            title="",
+            content=content,
+            size_hint=(0.7, 0.35),
+            auto_dismiss=False,
+            separator_height=0,
+            background="",
+            background_color=(0, 0, 0, 0),
+        )
+
+        def set_date(instance):
+            month_text = month_spinner.text if month_spinner.text != "Month" else "01"
+            day_text = day_spinner.text if day_spinner.text != "Day" else "01"
+            year_text = year_spinner.text if year_spinner.text != "Year" else str(today.year)
+            birthday_text = f"{month_text}/{day_text}/{year_text}"
+            if "birthday_input" in self.ids:
+                self.ids.birthday_input.text = birthday_text
+            self.birthday_display_text = birthday_text
+            popup.dismiss()
+
+        def dismiss_popup(instance):
+            popup.dismiss()
+
+        ok_button.bind(on_press=set_date)
+        cancel_button.bind(on_press=dismiss_popup)
+        popup.open()
+
+    def add_tag_to_section(self, section, tag_text):
+        try:
+            container = self.ids[f"{section}_container"]
+        except Exception:
+            return
+
+        if not tag_text:
+            return
+
+        tag_box = BoxLayout(
+            size_hint=(None, None),
+            height=dp(46),
+            spacing=dp(8),
+            padding=[dp(18), dp(8), dp(10), dp(8)],
+        )
+
         with tag_box.canvas.before:
-            Color(0.8, 0.8, 0.8, 1)
-            Rectangle(pos=tag_box.pos, size=tag_box.size)
-        tag_box.bind(pos=lambda obj, pos: setattr(obj.canvas.before.children[-1], 'pos', pos),
-                     size=lambda obj, size: setattr(obj.canvas.before.children[-1], 'size', size))
+            Color(1, 1, 1, 1)
+            tag_box.rect = RoundedRectangle(pos=tag_box.pos, size=tag_box.size, radius=[dp(23),])
+
+        tag_box.bind(
+            pos=lambda obj, pos: setattr(obj.rect, 'pos', pos),
+            size=lambda obj, size: setattr(obj.rect, 'size', size)
+        )
 
         label = Label(
-            text=tag_text,
-            font_size='14sp',
-            color=[0, 0, 0, 1],
+            text=str(tag_text),
+            font_size=dp(20),
+            color=(0, 0, 0, 1),
             halign='left',
             valign='center'
         )
@@ -182,31 +403,30 @@ class EditProfilePage(Screen):
 
         close_btn = Button(
             text="×",
-            size_hint_x=None,
-            width=25,
+            size_hint=(None, None),
+            size=(dp(34), dp(34)),
             background_normal='',
-            background_color=[1, 0.4, 0.4, 1],
-            color=[1, 1, 1, 1],
-            font_size='16sp'
+            background_color=(0, 0, 0, 0),
+            color=(0.90, 0.35, 0.25, 1),
+            font_size=dp(30)
         )
         close_btn.bind(on_press=lambda x: self.remove_tag(tag_box))
 
         tag_box.add_widget(label)
         tag_box.add_widget(close_btn)
 
-        # Add to correct section
-        if section == "likes":
-            container = self.ids.likes_container
-        elif section == "dislikes":
-            container = self.ids.dislikes_container
-        elif section == "goals":
-            container = self.ids.goals_container
-        else:
-            return
+        def update_tag_size(*args):
+            max_width = max(dp(130), container.width - dp(20))
+            inner_width = max_width - dp(70)
+            label.text_size = (inner_width, None)
+            label.texture_update()
+            tag_box.width = min(max(dp(130), label.texture_size[0] + dp(70)), max_width)
+            tag_box.height = max(dp(46), label.texture_size[1] + dp(16))
 
-        # Insert before the "+" button (which is the last child)
-        container.add_widget(tag_box, len(container.children) - 1)
-        container.height = container.minimum_height
+        update_tag_size()
+        container.bind(width=lambda *args: update_tag_size())
+        tag_box.bind(size=lambda *args: update_tag_size())
+        container.add_widget(tag_box)
 
     def on_pre_enter(self, *args):
         app = App.get_running_app()
@@ -214,15 +434,14 @@ class EditProfilePage(Screen):
         if not user:
             return
 
-        # fill simple fields
         try:
             if isinstance(user, dict):
                 self.ids.name_input.text = user.get("name", "")
                 self.ids.username_input.text = user.get("username", "")
-                # do not prefill password for security
                 self.ids.password_input.text = ""
                 self.ids.birthday_input.text = user.get("birthday", "")
                 self.ids.gender_input.text = user.get("gender", "")
+                self.birthday_display_text = user.get("birthday", "") or "Select Birthday"
                 likes = user.get("likes", []) or []
                 dislikes = user.get("dislikes", []) or []
                 goals = user.get("goals", []) or []
@@ -233,6 +452,7 @@ class EditProfilePage(Screen):
                 self.ids.password_input.text = ""
                 self.ids.birthday_input.text = getattr(user, "birthday", "") or ""
                 self.ids.gender_input.text = getattr(user, "gender", "") or ""
+                self.birthday_display_text = getattr(user, "birthday", "") or "Select Birthday"
                 likes = getattr(user, "likes", []) or []
                 dislikes = getattr(user, "dislikes", []) or []
                 goals = getattr(user, "goals", []) or []
@@ -241,9 +461,8 @@ class EditProfilePage(Screen):
             print("❌ EditProfilePage.on_pre_enter:", e)
             likes = dislikes = goals = []
             existing_pic = ""
+            self.birthday_display_text = "Select Birthday"
 
-        # determine which picture to show on the edit screen:
-        # prefer a recently selected image (app.profile_image_path), otherwise use the stored user picture
         app_pic = getattr(App.get_running_app(), "profile_image_path", "") or ""
         pic_to_show = app_pic if app_pic else existing_pic
         if pic_to_show:
@@ -259,90 +478,22 @@ class EditProfilePage(Screen):
             except Exception as e:
                 print("EditProfilePage: failed to set profile image:", e)
 
-        # rebuild containers: ensure '+' button is first, then tags
-        def rebuild(section_id, tags):
-            cont = self.ids[section_id]
-            cont.clear_widgets()
-            # add '+' button
-            plus = Button(text="+", size_hint_y=None, height=30,
-                          font_size='20sp', background_normal='',
-                          background_color=(0.85, 0.85, 0.85, 1), color=(0,0,0,1))
-            # section name: likes/dislikes/goals
-            sec_name = section_id.replace("_container", "")
-            plus.bind(on_release=lambda btn, s=sec_name: self.add_tag_prompt(s))
-            cont.add_widget(plus)
-            # add tags
-            for t in tags:
-                self.add_tag_to_section(sec_name, t)
-
-        rebuild("likes_container", likes)
-        rebuild("dislikes_container", dislikes)
-        rebuild("goals_container", goals)
-
-
-    def add_tag_to_section(self, section, text):
-        """Add one visual tag box to <section>_container."""
-        try:
-            cont = self.ids[f"{section}_container"]
-        except Exception:
-            return
-        if not text:
-            return
-        tag_box = BoxLayout(size_hint_y=None, height=30, spacing=5)
-        # background rectangle
-        with tag_box.canvas.before:
-            Color(0.8, 0.8, 0.8, 1)
-            Rectangle(pos=tag_box.pos, size=tag_box.size)
-        # keep background geometry updated
-        def _update_rect(inst, *l):
-            for instr in tag_box.canvas.before.children:
-                # Rectangle is last in canvas.before children; update it
-                if isinstance(instr, Rectangle):
-                    instr.pos = tag_box.pos
-                    instr.size = tag_box.size
-        tag_box.bind(pos=_update_rect, size=_update_rect)
-
-        lbl = Label(text=str(text), font_size='14sp', color=(0,0,0,1),
-                    halign='left', valign='center', text_size=(None, None))
-        # ensure wrapping/height
-        lbl.bind(width=lambda inst, w: setattr(inst, "text_size", (w, None)))
-        lbl.bind(texture_size=lambda inst, ts: setattr(inst, "height", inst.texture_size[1]))
-
-        btn = Button(text="×", size_hint_x=None, width=25, background_normal='',
-                     background_color=(1, 0.4, 0.4, 1), color=(1,1,1,1), font_size='16sp')
-        btn.bind(on_release=lambda b: self.remove_tag(tag_box))
-
-        tag_box.add_widget(lbl)
-        tag_box.add_widget(btn)
-        cont.add_widget(tag_box)
-
-
-    def add_tag_prompt(self, section):
-        """Open a small popup to add a tag to section."""
-        ti = TextInput(hint_text="Tag", multiline=False, size_hint_y=None, height=40)
-        def on_ok(instance):
-            val = ti.text.strip()
-            if val:
-                self.add_tag_to_section(section, val)
-            popup.dismiss()
-        ok = Button(text="Add", size_hint_y=None, height=40, on_release=on_ok)
-        box = BoxLayout(orientation='vertical', spacing=8, padding=8)
-        box.add_widget(ti)
-        box.add_widget(ok)
-        popup = Popup(title=f"Add to {section}", content=box, size_hint=(0.8, 0.3))
-        popup.open()
-
+        for section_name, tags in (("likes", likes), ("dislikes", dislikes), ("goals", goals)):
+            container = self.ids.get(f"{section_name}_container")
+            if not container:
+                continue
+            container.clear_widgets()
+            for tag in tags:
+                self.add_tag_to_section(section_name, tag)
 
     def remove_tag(self, widget):
         parent = widget.parent
         if parent:
             parent.remove_widget(widget)
 
-
     def _collect_tags(self, container_id):
         container = self.ids[container_id]
         tags = []
-        # container.children is LIFO (last added first). Each tag is a BoxLayout containing a Label and a Button.
         for child in container.children:
             if not isinstance(child, BoxLayout):
                 continue
@@ -353,12 +504,8 @@ class EditProfilePage(Screen):
                     break
             if found:
                 tags.append(found.text)
-            else:
-                # debug help if something unexpected appears
-                print("Warning: no text widget found in tag child:", [type(w) for w in child.children])
-        tags.reverse()  # return in visual (first-added) order
+        tags.reverse()
         return tags
-
 
     def save_profile(self):
         try:
@@ -378,7 +525,6 @@ class EditProfilePage(Screen):
             birthday = self.ids.birthday_input.text.strip()
             gender = self.ids.gender_input.text.strip()
 
-            # determine profile picture to save:
             app_path = getattr(App.get_running_app(), "profile_image_path", "") or ""
             existing_pic = user.get("profile_picture") if isinstance(user, dict) else getattr(user, "profile_picture", "")
             pic_to_save = app_path if app_path else (existing_pic or "")
@@ -393,7 +539,6 @@ class EditProfilePage(Screen):
                 "dislikes": self._collect_tags("dislikes_container"),
                 "goals": self._collect_tags("goals_container"),
             }
-            # only set password if provided (you may want to hash it)
             if password:
                 update["password"] = password
 
@@ -402,7 +547,6 @@ class EditProfilePage(Screen):
                 updated = db["Children"].find_one({"_id": user_id})
                 app.current_user = updated
 
-                # update UI images immediately in other screens if present
                 try:
                     prof = self.manager.get_screen("profile")
                     if 'profile_image' in prof.ids:
@@ -418,7 +562,6 @@ class EditProfilePage(Screen):
                 except Exception:
                     pass
                 try:
-                    # also update this edit screen's image (in case it was not updated)
                     if 'profile_image' in self.ids:
                         self.ids.profile_image.source = pic_to_save
                         self.ids.profile_image.reload()

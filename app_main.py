@@ -46,7 +46,7 @@ class MultiScreenApp(App):
         self.profile_image_path = path
 
         # Try to update common screens that show a profile image
-        for screen_name in ("edit_profile", "profile", "make_account"):
+        for screen_name in ("editProfile", "edit_profile", "profile", "make_account"):
             try:
                 screen = self.root.get_screen(screen_name)
                 if hasattr(screen, "ids") and "profile_image" in screen.ids:
