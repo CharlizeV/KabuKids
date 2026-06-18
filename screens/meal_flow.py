@@ -216,6 +216,53 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
         # Placeholder food list (replace later with actual data from before-meal input)
         self.placeholder_foods = ["chicken", "rice", "carrots", "apple", "bread"]
 
+    def _normalize_summary_text(self, value):
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if cleaned:
+                return cleaned
+        return ""
+
+    def _fallback_summary_from_transcript(self, conversation_text, meal_foods=None):
+        meal_foods = meal_foods or []
+        foods_text = ", ".join([str(food).strip() for food in meal_foods if str(food).strip()])
+
+        transcript_lines = [line.strip() for line in conversation_text.splitlines() if line.strip()]
+        if transcript_lines:
+            first_line = transcript_lines[0]
+            last_line = transcript_lines[-1]
+            summary_parts = [
+                "The meal session included a conversation between Kabu and the child.",
+                f"The conversation started with {first_line}.",
+                f"It ended with {last_line}.",
+            ]
+            if foods_text:
+                summary_parts.append(f"The child had these foods available: {foods_text}.")
+            summary_parts.append("Kabu stayed engaged throughout the meal.")
+            return " ".join(summary_parts[:5])
+
+        if foods_text:
+            return f"The meal session completed with the child eating {foods_text}. Kabu stayed engaged throughout the meal."
+
+        return "The meal session completed and the summary was not available, but the meal was still saved successfully."
+
+    def _build_meal_context_snapshot(self):
+        meal_snapshot = dict(CURRENT_MEAL or {})
+        meal_snapshot.setdefault("food_before_meal", [])
+        meal_snapshot.setdefault("food_after_meal", [])
+        meal_snapshot.setdefault("food_not_finished", [])
+        meal_snapshot.setdefault("food_finished", [])
+        meal_snapshot.setdefault("conversation_suggestions", [])
+        meal_snapshot.setdefault("ingredient_suggestions", [])
+        meal_snapshot.setdefault("summary", "")
+        meal_snapshot.setdefault("transcript", [])
+        meal_snapshot.setdefault("start_time", "")
+        meal_snapshot.setdefault("end_time", "")
+        meal_snapshot.setdefault("date", "")
+        meal_snapshot.setdefault("portion_before_image", "")
+        meal_snapshot.setdefault("portion_after_image", "")
+        return meal_snapshot
+
     def on_enter(self):
         # Populate checkboxes from CURRENT_MEAL if available, otherwise fallback placeholder
         container = self.ids.food_checkboxes
@@ -304,15 +351,33 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             #     CURRENT_MEAL["ingredient_suggestions"] = ["Carrots - good source of beta-carotene."]
             global hash_meal_final
 
-            CURRENT_MEAL["start_time"] = hash_meal_final['start_time']
-            CURRENT_MEAL["end_time"] = hash_meal_final['end_time']
-            CURRENT_MEAL["date"] = hash_meal_final['date']
-            CURRENT_MEAL["transcript"] = hash_meal_final['transcript']
-            CURRENT_MEAL["conversation_suggestions"] = hash_meal_final['conversation_suggestions']
-            CURRENT_MEAL["summary"] = hash_meal_final['summary']
-            CURRENT_MEAL["ingredient_suggestions"] = hash_meal_final['ingredient_suggestions']
-            CURRENT_MEAL["portion_before_image"] = hash_meal_final['portion_before_image']
-            CURRENT_MEAL["portion_after_image"] = hash_meal_final['portion_after_image']
+            meal_snapshot = self._build_meal_context_snapshot()
+            meal_final = dict(hash_meal_final or {})
+
+            CURRENT_MEAL["start_time"] = meal_final.get("start_time") or meal_snapshot.get("start_time") or datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
+            CURRENT_MEAL["end_time"] = meal_final.get("end_time") or meal_snapshot.get("end_time") or datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
+            CURRENT_MEAL["date"] = meal_final.get("date") or meal_snapshot.get("date") or datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " ")
+            CURRENT_MEAL["transcript"] = meal_final.get("transcript") or meal_snapshot.get("transcript") or []
+            CURRENT_MEAL["conversation_suggestions"] = meal_final.get("conversation_suggestions") or meal_snapshot.get("conversation_suggestions") or []
+            CURRENT_MEAL["ingredient_suggestions"] = meal_final.get("ingredient_suggestions") or meal_snapshot.get("ingredient_suggestions") or []
+            CURRENT_MEAL["portion_before_image"] = meal_final.get("portion_before_image") or meal_snapshot.get("portion_before_image") or ""
+            CURRENT_MEAL["portion_after_image"] = meal_final.get("portion_after_image") or meal_snapshot.get("portion_after_image") or ""
+
+            transcript_entries = CURRENT_MEAL.get("transcript") or []
+            conversation_text = ""
+            if transcript_entries:
+                for entry in transcript_entries:
+                    speaker = str(entry.get("speaker", "Unknown")).capitalize()
+                    text = str(entry.get("text", "")).strip()
+                    if text:
+                        conversation_text += f"{speaker}: {text}\n"
+
+            summary_text = self._normalize_summary_text(meal_final.get("summary"))
+            if not summary_text:
+                summary_text = self._normalize_summary_text(meal_snapshot.get("summary"))
+            if not summary_text:
+                summary_text = self._fallback_summary_from_transcript(conversation_text, CURRENT_MEAL.get("food_before_meal", []))
+            CURRENT_MEAL["summary"] = summary_text
 
             # ensure _id exists before insert
             if not CURRENT_MEAL.get("_id"):
@@ -417,6 +482,53 @@ class SessionPage(Screen):
         self.full_transcript = []
         self.loading_popup = None
         self.session_finished = False
+
+    def _normalize_summary_text(self, value):
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if cleaned:
+                return cleaned
+        return ""
+
+    def _fallback_summary_from_transcript(self, conversation_text, meal_foods=None):
+        meal_foods = meal_foods or []
+        foods_text = ", ".join([str(food).strip() for food in meal_foods if str(food).strip()])
+
+        transcript_lines = [line.strip() for line in conversation_text.splitlines() if line.strip()]
+        if transcript_lines:
+            first_line = transcript_lines[0]
+            last_line = transcript_lines[-1]
+            summary_parts = [
+                "The meal session included a conversation between Kabu and the child.",
+                f"The conversation started with {first_line}.",
+                f"It ended with {last_line}.",
+            ]
+            if foods_text:
+                summary_parts.append(f"The child had these foods available: {foods_text}.")
+            summary_parts.append("Kabu stayed engaged throughout the meal.")
+            return " ".join(summary_parts[:5])
+
+        if foods_text:
+            return f"The meal session completed with the child eating {foods_text}. Kabu stayed engaged throughout the meal."
+
+        return "The meal session completed and the summary was not available, but the meal was still saved successfully."
+
+    def _build_meal_context_snapshot(self):
+        meal_snapshot = dict(CURRENT_MEAL or {})
+        meal_snapshot.setdefault("food_before_meal", [])
+        meal_snapshot.setdefault("food_after_meal", [])
+        meal_snapshot.setdefault("food_not_finished", [])
+        meal_snapshot.setdefault("food_finished", [])
+        meal_snapshot.setdefault("conversation_suggestions", [])
+        meal_snapshot.setdefault("ingredient_suggestions", [])
+        meal_snapshot.setdefault("summary", "")
+        meal_snapshot.setdefault("transcript", [])
+        meal_snapshot.setdefault("start_time", "")
+        meal_snapshot.setdefault("end_time", "")
+        meal_snapshot.setdefault("date", "")
+        meal_snapshot.setdefault("portion_before_image", "")
+        meal_snapshot.setdefault("portion_after_image", "")
+        return meal_snapshot
 
     def on_pre_enter(self, *args):
         # set default neutral image immediately
@@ -616,11 +728,24 @@ class SessionPage(Screen):
             Kabu_emotion: [Excited, Happy, Neutral, Sad] (Note: EMOTIONS SHOULD ONLY BE FROM THIS LIST: Excited, Happy, Neutral, Sad. Do not create new emotions outside of this list. As much as possible try to switch emotions. If you're concerned then display sad)
             Topic Mentioned: <One word to descibe the topic.>
 
-            FOLLOW THIS EXACT FORMAT IN EVERY RESPONSE. DO NOT DEVIATE FROM IT.
-            Example: 
-            Kabu: I love talking about animals! They are so much fun. Owls are such interesting creatures, don't you think?
+            FORMAT YOUR RESPONSE AS BELOW (EVERY REPLY MUST FOLLOW THIS FORMAT — NON-NEGOTIABLE):
+
+            Kabu: [direction]<your response here>
+            Kabu_emotion: [Excited | Happy | Neutral | Sad]
+            Topic Mentioned: <one word describing the topic>
+
+            DIRECTION RULES (pick one per response):
+            - Excited   → [excited] or [rapid babbling] (use [rapid babbling] only when reacting to something very fun)
+            - Happy     → [cheerful]
+            - Neutral   → [friendly]
+            - Sad       → [warm]
+
+            The direction tag goes INSIDE the Kabu: line, directly before the spoken text.
+
+            Example:
+            Kabu: [cheerful]Ooh, that sounds yummy! [friendly]What part did you like best? [excited] I love that food too!
             Kabu_emotion: [Happy]
-            Topic Mentioned: Owls
+            Topic Mentioned: Food
             """ 
 
             Logger.info("Kabu: opening camera index %s", config.CAMERA_INDEX)
@@ -654,7 +779,7 @@ class SessionPage(Screen):
                 emotions = [None]
 
                 if (first_reply):
-                    tts.tts_kokoro(f""" Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
+                    tts.tts_kokoro(f"""[Cheerful] Hi {child_data.get('name')}! I'm so excited to chat with you while you eat your meal!""")
                     first_reply = False
 
                 def audio_task():
@@ -779,12 +904,12 @@ class SessionPage(Screen):
                 Logger.info("Analysis request failed: %s", e)
                 parsed = {"recommendations": [], "disliked_foods": []}
 
+            conversation_text = ""
             try:
                 end = self.fmt_time(datetime.now())
                 Logger.info("Kabu: requesting summary")
                 
                 # Build conversation transcript from full_transcript (only what was said)
-                conversation_text = ""
                 if self.full_transcript:
                     for entry in self.full_transcript:
                         speaker = entry.get("speaker", "Unknown").capitalize()
@@ -793,20 +918,23 @@ class SessionPage(Screen):
                 
                 # Create a focused summary prompt with only the conversation
                 focused_summary_prompt = f"""
-Based ONLY on the following mealtime conversation, create a 5 sentence summary of what happened during the meal. Do NOT invent or add any context outside of this conversation. Focus only on what was actually discussed.
+Based ONLY on the following mealtime conversation, write exactly 5 sentences describing what happened during the meal. Do NOT invent or add any context outside of this conversation. Do not write more than 5 sentences and do not write fewer than 5 sentences. Focus only on what was actually discussed.
 
 MEALTIME CONVERSATION:
 {conversation_text}
 
-Please provide a 5 sentence summary:
+Please provide exactly 5 sentences and nothing else:
 """
                 
                 # Use direct API call to get summary without system context
                 summary = llm.get_direct_response(focused_summary_prompt, max_tokens=512) or ""
+                summary = self._normalize_summary_text(summary)
+                if not summary:
+                    summary = self._fallback_summary_from_transcript(conversation_text, CURRENT_MEAL.get("food_before_meal", []))
                 
             except Exception as e:
                 Logger.info("Kabu: summary request failed: %s", e)
-                summary = ""
+                summary = self._fallback_summary_from_transcript(conversation_text, CURRENT_MEAL.get("food_before_meal", []))
 
             try:
                 global loading_screen
@@ -823,6 +951,7 @@ Please provide a 5 sentence summary:
                     "portion_before_image": "assets/portion_before_dummy.jpg",
                     "portion_after_image": "assets/portion_after_dummy.jpg",
                 }
+                meal_hash["summary"] = self._normalize_summary_text(meal_hash.get("summary")) or self._fallback_summary_from_transcript(conversation_text, CURRENT_MEAL.get("food_before_meal", []))
                 loading_screen = True
                 hash_meal_final = meal_hash
                 # log a concise preview (avoid passing extra args to Logger.info)
