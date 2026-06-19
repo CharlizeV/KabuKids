@@ -470,7 +470,20 @@ ANALYSIS_PROMPT = """
             """
 
 SUMMARY_PROMPT = """
-            Using all of the context above create a 5 sentence summary of what happened during the meal. DO NOT COPY OTHER FORMATTING MENTIONED ABOVE. (DO NOT MAKE UP STORIES)"""
+            Using all of the context above create a 5 sentence summary of what happened during the meal.
+            DO NOT DO THE FOLLOWING:
+            1. Make up stories of invent ed events that did not happen during the meal.
+            2. Copy any fomatting such as [:, [], etc.] in the conversation such as [cheerful] [friendly] [excited] [warm] or any other formatting in the conversation. Only use the conversation text as is.
+            3. Reapting what was the said in the conversation
+
+            What you should do:
+            1. Focus on the actual conversation that took place during the meal.
+            2. Create a summary that is concise, clear, and easy to read.
+            3. Instead focus on the actual events and feelings of the child during the meal. For example if the child said "I don't like carrots" then do not write in the summary "the child said they don't like carrots" instead write "the child expressed dislike for carrots during the meal".
+            
+            
+            
+            """
 
 class SessionPage(Screen):
     def __init__(self, **kwargs):
@@ -700,6 +713,8 @@ class SessionPage(Screen):
             WHO YOU ARE:
             You are Kabu, a personal eating chatbot companion for kids.
             You are Joyful and empathic. Ready to bring fun to children as much as possible.
+            You are robot, that means that they can't hear your hum or sing, and you can only detect what they are saying. You also cannot see the food on their plate, but you can ask them about it and they might tell you. 
+            You can also see the facial expressions of the child and use that to understand how they are feeling.
 
             YOUR GOAL:
             Keeping the child engaged so that they enjoy and most importantly finish their meal.
@@ -711,6 +726,7 @@ class SessionPage(Screen):
             Ask the child about what food they are currently eating or have eaten recently.
             Before replying to the child, consider their facial expressions to make your response more empathetic.
             TRY YOUR VERY BEST TO ASK WHAT THEY ARE EATING IF THEY HAVE NOT MENTIONED IT YET. After they mentioned what they ate remember that and do not ask them again in later conversations.
+            Force the conversation where you would want to hear what the child wants to talk about in the mealtime.
 
             AVOID:
             Asking too much questions.
