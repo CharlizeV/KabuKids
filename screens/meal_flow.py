@@ -590,7 +590,8 @@ class SessionPage(Screen):
                 "neutral": "neutral.mp4",
                 "happy": "happy.mp4",
                 "excited": "excited.mp4",
-                "sad": "sad.mp4"
+                "sad": "sad.mp4",
+                "listening": "listening.mp4"
             }
             picked = "neutral.mp4"
             if emotions:
@@ -830,6 +831,7 @@ class SessionPage(Screen):
                 audio_thread = threading.Thread(target=audio_task, daemon=True)
                 fer_thread = threading.Thread(target=fer_task, daemon=True)
 
+                Clock.schedule_once(lambda dt: self.update_emotion_image(["listening"]), 0)
                 audio_thread.start()
                 fer_thread.start()
 
