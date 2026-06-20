@@ -850,7 +850,7 @@ class SessionPage(Screen):
                 self.full_transcript.append({"speaker": "child", 
                                              "text": user_text, 
                                              "emotions": emotion_list, 
-                                             "timestamp": datetime.now(timezone.utc).isoformat()})
+                                             "timestamp": self.fmt_time(datetime.now(timezone.utc))})
 
                 Logger.info("Kabu: got user_text='%s' emotions=%s", str(user_text)[:80], str(emotion_list))
 
@@ -885,7 +885,7 @@ class SessionPage(Screen):
                     
                     self.full_transcript.append({"speaker": "kabu", 
                                                  "text": parsed['text'],
-                                                 "timestamp": self.fmt_time(datetime.now(timezone.utc).isoformat()),
+                                                 "timestamp": self.fmt_time(datetime.now(timezone.utc)),
                                                  "emotion": parsed['emotions']})
 
                     try:

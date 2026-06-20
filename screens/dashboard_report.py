@@ -341,6 +341,12 @@ class TranscriptPage(Screen):
             return f"({value.strftime('%I:%M%p').lstrip('0')})"
 
         text = str(value).strip()
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            return f"({dt.strftime('%I:%M%p').lstrip('0')})"
+        except Exception:
+            pass
+
         for fmt in (
             "%Y-%m-%dT%H:%M:%S.%fZ",
             "%Y-%m-%dT%H:%M:%SZ",
