@@ -7,7 +7,7 @@ from groq import Groq
 GROQ_API_KEY = ""
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-def tts_kokoro( text, voice="autumn"):
+def tts_kokoro( text, voice="austin"):
     if client is None or not text or not text.strip():
         return
     
