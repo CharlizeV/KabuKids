@@ -913,9 +913,11 @@ class SessionPage(Screen):
         finally:
             Logger.info("Kabu: _run_session_loop finishing, cleaning up")
             try:
-                analysis_reply = llm.get_kabu_response(ANALYSIS_PROMPT)
-                Logger.info("\n--- Conversation Analysis ---")
-                Logger.info(str(analysis_reply)[:2000])
+                analysis_reply = llm.get_direct_response(ANALYSIS_PROMPT, max_tokens=1024)
+                Logger.info("-ANALYSIS_PROMPT-")
+                Logger.info(ANALYSIS_PROMPT)
+                Logger.info("-Analysis Reply-")
+                Logger.info(analysis_reply)
                 parsed = utils.parse_kabu_reply_final(analysis_reply) or {}
                 Logger.info("Kabu: analysis parsed keys -> %s", list(parsed.keys()))
             except Exception as e:
@@ -936,13 +938,13 @@ class SessionPage(Screen):
                 
                 # Create a focused summary prompt with only the conversation
                 focused_summary_prompt = f"""
-Based ONLY on the following mealtime conversation, write exactly 5 sentences describing what happened during the meal. Do NOT invent or add any context outside of this conversation. Do not write more than 5 sentences and do not write fewer than 5 sentences. Focus only on what was actually discussed.
+                Based ONLY on the following mealtime conversation, write exactly 5 sentences describing what happened during the meal. Do NOT invent or add any context outside of this conversation. Do not write more than 5 sentences and do not write fewer than 5 sentences. Focus only on what was actually discussed.
 
-MEALTIME CONVERSATION:
-{conversation_text}
+                MEALTIME CONVERSATION:
+                {conversation_text}
 
-Please provide exactly 5 sentences and nothing else:
-"""
+                Please provide exactly 5 sentences and nothing else:
+                """
                 
                 # Use direct API call to get summary without system context
                 summary = llm.get_direct_response(focused_summary_prompt, max_tokens=512) or ""
