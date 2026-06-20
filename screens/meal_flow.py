@@ -33,7 +33,7 @@ from PIL import Image
 from transformers import pipeline
 from openai import OpenAI
 from typing import Dict, List, Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from kivy.logger import Logger
 
 hash_meal_final = {
@@ -41,6 +41,12 @@ hash_meal_final = {
 }
 
 loading_screen = False
+
+PHT = timezone(timedelta(hours=8))
+
+
+def now_pht():
+    return datetime.now(PHT)
 
 class PortionSizeBeforePage(Screen):
     pass
@@ -354,9 +360,9 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             meal_snapshot = self._build_meal_context_snapshot()
             meal_final = dict(hash_meal_final or {})
 
-            CURRENT_MEAL["start_time"] = meal_final.get("start_time") or meal_snapshot.get("start_time") or datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
-            CURRENT_MEAL["end_time"] = meal_final.get("end_time") or meal_snapshot.get("end_time") or datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
-            CURRENT_MEAL["date"] = meal_final.get("date") or meal_snapshot.get("date") or datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " ")
+            CURRENT_MEAL["start_time"] = meal_final.get("start_time") or meal_snapshot.get("start_time") or now_pht().strftime("%I:%M %p").lstrip("0")
+            CURRENT_MEAL["end_time"] = meal_final.get("end_time") or meal_snapshot.get("end_time") or now_pht().strftime("%I:%M %p").lstrip("0")
+            CURRENT_MEAL["date"] = meal_final.get("date") or meal_snapshot.get("date") or now_pht().strftime("%B %d, %Y").replace(" 0", " ")
             CURRENT_MEAL["transcript"] = meal_final.get("transcript") or meal_snapshot.get("transcript") or []
             CURRENT_MEAL["conversation_suggestions"] = meal_final.get("conversation_suggestions") or meal_snapshot.get("conversation_suggestions") or []
             CURRENT_MEAL["ingredient_suggestions"] = meal_final.get("ingredient_suggestions") or meal_snapshot.get("ingredient_suggestions") or []
@@ -674,14 +680,14 @@ class SessionPage(Screen):
                     try:
                         return dt.strftime("%I:%M %p").lstrip("0")
                     except Exception:
-                        return datetime.now(timezone.utc).strftime("%I:%M %p").lstrip("0")
+                        return now_pht().strftime("%I:%M %p").lstrip("0")
 
     def fmt_date(self, dt):
         try:
             s = dt.strftime("%B %d, %Y")
             return s.replace(" 0", " ")
         except Exception:
-            return datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " ")
+            return now_pht().strftime("%B %d, %Y").replace(" 0", " ")
 
     def _run_session_loop(self):
         Logger.info("Kabu: _run_session_loop starting")
@@ -784,7 +790,7 @@ class SessionPage(Screen):
             })
             Logger.info("Kabu: utils history reset")
 
-            start_time = datetime.now(timezone.utc)
+            start_time = now_pht()
             Logger.info("Kabu: entering main loop")
 
             topics_mentioned = set()
@@ -850,7 +856,7 @@ class SessionPage(Screen):
                 self.full_transcript.append({"speaker": "child", 
                                              "text": user_text, 
                                              "emotions": emotion_list, 
-                                             "timestamp": self.fmt_time(datetime.now(timezone.utc))})
+                                             "timestamp": self.fmt_time(now_pht())})
 
                 Logger.info("Kabu: got user_text='%s' emotions=%s", str(user_text)[:80], str(emotion_list))
 
@@ -885,7 +891,7 @@ class SessionPage(Screen):
                     
                     self.full_transcript.append({"speaker": "kabu", 
                                                  "text": parsed['text'],
-                                                 "timestamp": self.fmt_time(datetime.now(timezone.utc)),
+                                                 "timestamp": self.fmt_time(now_pht()),
                                                  "emotion": parsed['emotions']})
 
                     try:
@@ -962,7 +968,7 @@ class SessionPage(Screen):
                 meal_hash = {
                     "start_time": str(start),
                     "end_time": str(end),
-                    "date": datetime.now(timezone.utc).strftime("%B %d, %Y").replace(" 0", " "),
+                    "date": now_pht().strftime("%B %d, %Y").replace(" 0", " "),
                     "transcript": list(self.full_transcript) if getattr(self, "full_transcript", None) else [],
                     "conversation_suggestions": parsed.get("recommendations", []) if isinstance(parsed, dict) else [],
                     "ingredient_suggestions": parsed.get("disliked_foods", []) if isinstance(parsed, dict) else [],
