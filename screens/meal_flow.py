@@ -7,7 +7,8 @@ from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.video import Video
 from mainsession.config import CAMERA_INDEX
-from services.models import CURRENT_MEAL, init_current_meal, clear_current_meal, SAMPLE_REPORTS
+from services.models import CURRENT_MEAL, init_current_meal, clear_current_meal, SAMPLE_REPORTS, get_logged_in_user_id
+from pymongo.errors import DuplicateKeyError
 from db import meals_col
 from kivy.app import App
 from kivy.metrics import dp
@@ -389,37 +390,35 @@ class InputIngredientsAMPage(Screen):  # AM = After Meal
             if not CURRENT_MEAL.get("_id"):
                 CURRENT_MEAL["_id"] = str(uuid.uuid4())
 
-            # attach currently logged-in user's id (if available)
+            # Always attach the logged-in child's MongoDB _id (same field the dashboard queries)
             try:
                 app = App.get_running_app()
                 current_user = getattr(app, "current_user", None)
-                if current_user:
-                    if isinstance(current_user, dict):
-                        uid = current_user.get("user_id") or current_user.get("id") or current_user.get("_id") or current_user.get("userId")
-                    else:
-                        uid = getattr(current_user, "user_id", None) or getattr(current_user, "id", None)
-                    if uid is not None:
-                        CURRENT_MEAL["user_id"] = str(uid)
+                uid = get_logged_in_user_id(current_user)
+                if uid:
+                    CURRENT_MEAL["user_id"] = uid
             except Exception:
                 pass
 
             # Insert into MongoDB and ensure inserted id is a string key used in SAMPLE_REPORTS
             meal_doc = None
+            meal_id = str(CURRENT_MEAL["_id"])
             try:
                 result = meals_col.insert_one(CURRENT_MEAL)
                 inserted_id = str(result.inserted_id)
                 Logger.info(f"Inserted meal: {inserted_id}")
                 meal_doc = CURRENT_MEAL.copy()
                 meal_doc["_id"] = inserted_id
-                # ensure inserted doc contains user_id (string)
-                if meal_doc.get("user_id") is not None:
-                    meal_doc["user_id"] = str(meal_doc["user_id"])
-                else:
-                    meal_doc["user_id"] = CURRENT_MEAL.get("user_id")
+                meal_doc["user_id"] = str(meal_doc.get("user_id") or "")
+            except DuplicateKeyError:
+                # Same meal _id already saved (e.g. double-click finish) — update instead
+                Logger.info("Meal _id already exists, updating: %s", meal_id)
+                meals_col.replace_one({"_id": meal_id}, CURRENT_MEAL, upsert=True)
+                meal_doc = CURRENT_MEAL.copy()
+                meal_doc["_id"] = meal_id
+                meal_doc["user_id"] = str(meal_doc.get("user_id") or "")
             except Exception as e:
                 Logger.info("failed to insert meal to MongoDB: %s", e)
-                if not CURRENT_MEAL.get("_id"):
-                    CURRENT_MEAL["_id"] = str(uuid.uuid4())
                 meal_doc = CURRENT_MEAL.copy()
 
             # Ensure food_after_meal exists in the stored doc (defensive)

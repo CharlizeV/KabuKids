@@ -32,6 +32,20 @@ def clear_current_meal():
     global CURRENT_MEAL
     CURRENT_MEAL = {}
 
+
+def get_logged_in_user_id(current_user) -> str:
+    """Return the MongoDB Children _id for the logged-in user (consistent everywhere)."""
+    if not current_user:
+        return ""
+    try:
+        if isinstance(current_user, dict):
+            uid = current_user.get("_id")
+        else:
+            uid = getattr(current_user, "_id", None)
+        return str(uid) if uid is not None else ""
+    except Exception:
+        return ""
+
 def fetch_reports_for_user(user_id: str, callback: Callable[[Dict[str, Any]], None]) -> None:
     try:
         if not user_id:
