@@ -1,393 +1,552 @@
-# System Architecture Overview
+# KabuKids — System Architecture
 
 ## 1. Introduction
 
-KabuKids is a desktop application designed to facilitate engaging meal-time interactions for children through an AI-powered conversational companion. The system integrates multiple artificial intelligence and machine learning components to provide real-time conversation, emotion recognition, and personalized meal tracking. This document presents a comprehensive overview of the system architecture, detailing the layered design, component interactions, and data flow patterns.
+KabuKids is a desktop Kivy application that helps children stay engaged during meals through **Kabu**, an AI conversational companion. During a meal session the app:
 
-## 2. Architectural Overview
+- Listens to the child (speech-to-text)
+- Observes facial expressions (local emotion recognition)
+- Generates empathetic replies (large language model)
+- Speaks back (text-to-speech)
+- Records the conversation and saves a structured meal report to MongoDB
 
-The system follows a layered architecture pattern, organized into four primary layers: the Presentation Layer, Business Logic Layer, AI/ML Processing Layer, and Data Persistence Layer. This separation of concerns enables modularity, maintainability, and scalability of the system components.
+This document describes the **current** codebase as of the modular refactor (`app_main.py` + `screens/`). Older references to Ollama, local Whisper, Kokoro TTS, portion-size camera screens, and `mainsession/mongodb.py` are no longer accurate.
 
-### 2.1 System Layers
+---
 
-The architecture is structured as follows:
+## 2. High-Level Architecture
 
-**Presentation Layer**: Handles all user interface interactions through Kivy-based screens and widgets, implementing a screen-based navigation model with state management.
+The system is organized into four layers:
 
-**Business Logic Layer**: Manages application state, orchestrates meal flow workflows, and coordinates between UI components and backend services.
+```mermaid
+flowchart TB
+    subgraph presentation [Presentation Layer]
+        KV[KabuKids.kv + screen KV files]
+        Screens[screens/*.py]
+        Widgets[widgets/meal_item.py]
+    end
 
-**AI/ML Processing Layer**: Integrates multiple machine learning models for speech recognition, natural language processing, text-to-speech synthesis, and facial expression recognition, operating in a parallel processing paradigm.
+    subgraph business [Business Logic Layer]
+        Models[services/models.py]
+        AppState[App.current_user + properties]
+    end
 
-**Data Persistence Layer**: Provides database operations through MongoDB Atlas, managing user profiles, meal records, and conversation histories.
+    subgraph ai [AI / ML Layer — mainsession/]
+        STT[stt.py — Groq Whisper]
+        FER[fer.py — ViT FER local]
+        LLM[llm.py — Groq chat]
+        TTS[tts.py — Groq Orpheus]
+        Utils[utils.py — history + parsing]
+    end
 
-## 3. Presentation Layer Architecture
+    subgraph data [Data Layer]
+        DB[db.py]
+        Mongo[(MongoDB Atlas — kabu_db_user)]
+    end
 
-### 3.1 User Interface Framework
-
-The presentation layer is built using Kivy 2.0+, a cross-platform Python framework that enables rapid UI development with declarative layout definitions. The application employs a ScreenManager pattern for navigation, where each functional unit is represented as a discrete Screen class.
-
-### 3.2 Screen Hierarchy and Navigation
-
-The application implements a state machine-based navigation model with the following screen hierarchy:
-
-- **Authentication Screens**: `SplashScreen`, `LoginPage`, `MakeAccountPage`
-- **Main Application Screens**: `DashboardPage`, `ProfilePage`, `EditProfilePage`
-- **Meal Flow Screens**: `InputIngredientsBMPage`, `PortionSizeBeforePage`, `SessionPage`, `PortionSizeAfterPage`, `InputIngredientsAMPage`
-- **Reporting Screens**: `ReportPage`, `TranscriptPage`
-
-Navigation between screens is managed by the `WindowManager` (ScreenManager), which maintains the current screen state and handles transitions. Each screen implements lifecycle hooks (`on_pre_enter`, `on_enter`, `on_leave`) for state initialization and cleanup operations.
-
-### 3.3 UI Component Architecture
-
-The UI follows a widget-based composition model where complex screens are constructed from reusable components:
-
-- **Custom Widgets**: `MealItem` (meal list entries), `ColoredCheckBox` (custom checkbox styling)
-- **Layout Containers**: BoxLayout, GridLayout for organizing child widgets
-- **Data Binding**: Kivy Properties (StringProperty, ListProperty) enable automatic UI updates when underlying data changes
-
-### 3.4 State Management in Presentation Layer
-
-The presentation layer maintains application state through:
-
-- **Application-level State**: `App.current_user` stores the authenticated user document
-- **Global Meal State**: `CURRENT_MEAL` dictionary tracks the current meal session data
-- **Report Cache**: `SAMPLE_REPORTS` dictionary caches fetched meal reports for efficient UI updates
-
-State synchronization between screens is achieved through property bindings and event-driven updates, ensuring consistent data representation across the application.
-
-## 4. Business Logic Layer Architecture
-
-### 4.1 State Management Services
-
-The business logic layer provides centralized state management through the `services/models.py` module, which defines:
-
-- **Meal State Functions**: `init_current_meal()`, `clear_current_meal()` for managing meal session lifecycle
-- **Data Fetching Functions**: `fetch_reports_for_user()` for asynchronous retrieval of user meal reports
-- **Global State Variables**: `CURRENT_MEAL`, `SAMPLE_REPORTS` for cross-module state sharing
-
-### 4.2 Meal Flow Orchestration
-
-The meal tracking workflow is orchestrated through a sequential state machine pattern:
-
-1. **Pre-Meal Phase**: 
-   - Ingredient input collection (`InputIngredientsBMPage`)
-   - Portion size image capture before meal (`PortionSizeBeforePage`)
-
-2. **During-Meal Phase**:
-   - Interactive conversation session (`SessionPage`)
-   - Real-time transcript recording
-   - Emotion tracking and display
-
-3. **Post-Meal Phase**:
-   - Portion size image capture after meal (`PortionSizeAfterPage`)
-   - Food completion tracking (`InputIngredientsAMPage`)
-   - Meal document assembly and persistence
-
-Each phase updates the global `CURRENT_MEAL` state, which is ultimately merged and persisted to the database upon meal completion.
-
-### 4.3 Data Flow Patterns
-
-The business logic layer implements several data flow patterns:
-
-- **Unidirectional Data Flow**: UI events trigger state updates, which propagate to dependent components
-- **Asynchronous Operations**: Database queries execute in background threads to prevent UI blocking
-- **Callback-based Communication**: Asynchronous operations use callback functions to update UI upon completion
-
-## 5. AI/ML Processing Layer Architecture
-
-### 5.1 Component Architecture
-
-The AI/ML layer consists of four primary processing components, each implemented as an independent module:
-
-1. **Speech-to-Text (STT) Module** (`mainsession/stt.py`)
-2. **Large Language Model (LLM) Module** (`mainsession/llm.py`)
-3. **Text-to-Speech (TTS) Module** (`mainsession/tts.py`)
-4. **Facial Expression Recognition (FER) Module** (`mainsession/fer.py`)
-
-### 5.2 Parallel Processing Architecture
-
-The conversation session implements a parallel processing architecture where audio capture and facial expression analysis execute concurrently:
-
-```
-┌─────────────────────────────────────────┐
-│         Main Session Loop               │
-│                                         │
-│  ┌──────────────┐  ┌──────────────┐   │
-│  │ Audio Thread │  │  FER Thread  │   │
-│  │              │  │              │   │
-│  │ - Record     │  │ - Capture    │   │
-│  │ - Transcribe │  │ - Analyze    │   │
-│  │ (30s timeout)│  │ (5s duration)│   │
-│  └──────┬───────┘  └──────┬───────┘   │
-│         │                  │           │
-│         └────────┬─────────┘           │
-│                  │                     │
-│         ┌────────▼─────────┐          │
-│         │  Combine Inputs  │          │
-│         │  (text + emotion)│          │
-│         └────────┬─────────┘          │
-│                  │                     │
-│         ┌────────▼─────────┐          │
-│         │  LLM Generation   │          │
-│         └────────┬─────────┘          │
-│                  │                     │
-│         ┌────────▼─────────┐          │
-│         │  TTS Synthesis    │          │
-│         └───────────────────┘          │
-└─────────────────────────────────────────┘
+    KV --> Screens
+    Screens --> Models
+    Screens --> DB
+    Screens --> ai
+    Models --> DB
+    ai --> Utils
+    DB --> Mongo
 ```
 
-This architecture enables real-time responsiveness by processing audio and video inputs simultaneously, reducing overall latency in the conversation loop.
+| Layer | Responsibility | Key modules |
+|-------|----------------|-------------|
+| Presentation | UI, navigation, user input | `KabuKids.kv`, `screens/`, `widgets/` |
+| Business logic | Session state, report cache, meal lifecycle | `services/models.py`, `App` properties |
+| AI / ML | Audio capture, transcription, FER, LLM, TTS | `mainsession/` |
+| Data | Single MongoDB connection | `db.py` |
+
+---
+
+## 3. Project Structure
+
+```
+KabuKids/
+├── app_main.py              # Canonical entry point
+├── KabuKids.py              # Legacy monolithic duplicate (deprecated)
+├── KabuKids.kv              # Root ScreenManager + #:include for all screens
+├── db.py                    # MongoDB client and collection handles
+├── colors.py                # Shared theme RGBA constants
+├── services/
+│   └── models.py            # CURRENT_MEAL, SAMPLE_REPORTS, fetch helpers
+├── screens/
+│   ├── auth.py              # Splash, login, registration
+│   ├── dashboard_report.py  # Dashboard, reports, transcript
+│   ├── profile.py           # Profile view and edit
+│   ├── meal_flow.py         # Before/after meal + Kabu session
+│   ├── *.kv                 # Per-screen layouts
+│   ├── KabuEmotions/        # Emotion videos (neutral, happy, excited, sad, listening)
+│   └── icons/               # UI assets
+├── mainsession/
+│   ├── config.py            # Audio/camera/history constants
+│   ├── stt.py               # Speech-to-text (Groq)
+│   ├── llm.py               # Chat completions (Groq)
+│   ├── tts.py               # Text-to-speech (Groq)
+│   ├── fer.py               # Facial expression recognition (local HF model)
+│   ├── utils.py             # Conversation history + response parsing
+│   └── __init__.py          # Suppresses noisy pymongo/urllib3 logs
+├── widgets/
+│   └── meal_item.py         # Meal report list card
+├── insert_meals.py          # One-off seed script (reports_data.json → Meals)
+└── test_mongo.py            # Connection smoke test
+```
+
+---
+
+## 4. Entry Points
+
+### Canonical: `app_main.py`
+
+Run with:
+
+```bash
+python app_main.py
+```
+
+- Imports screen modules so Kivy `Builder` can resolve class names in KV
+- Loads `KabuKids.kv`
+- Sets window size to 960×540
+- Defines `MultiScreenApp` with `profile_image_path` and `selected_meal_id`
+- Profile image picker uses **tkinter** `filedialog` on desktop
+
+### Deprecated: `KabuKids.py`
+
+`KabuKids.py` is a ~1,500-line monolith that duplicates screen classes and maintains its own `CURRENT_MEAL` / `SAMPLE_REPORTS` globals instead of using `services/models.py`. Its `SessionPage` is an empty stub (`pass`), so **running `KabuKids.py` will not start the Kabu conversation loop**. Treat it as legacy code pending removal.
+
+---
+
+## 5. Presentation Layer
+
+### 5.1 UI Framework
+
+- **Kivy 2.x** with declarative `.kv` layouts
+- **`WindowManager`** (`ScreenManager` subclass) with `NoTransition` for instant screen changes
+- Root layout defined in `KabuKids.kv`, which `#:include`s each screen's KV file
+
+### 5.2 Screen Registry
+
+| Screen name (KV) | Python class | Module |
+|------------------|--------------|--------|
+| `splash` | `SplashScreen` | `screens/auth.py` |
+| `login` | `LoginPage` | `screens/auth.py` |
+| `make_account` | `MakeAccountPage` | `screens/auth.py` |
+| `dashboard` | `DashboardPage` | `screens/dashboard_report.py` |
+| `report_dashboard` | `ReportDashboardPage` | `screens/dashboard_report.py` |
+| `report` | `ReportPage` | `screens/dashboard_report.py` |
+| `transcript` | `TranscriptPage` | `screens/dashboard_report.py` |
+| `profile` | `ProfilePage` | `screens/profile.py` |
+| `editProfile` | `EditProfilePage` | `screens/profile.py` |
+| `inputIngredientsBM` | `InputIngredientsBMPage` | `screens/meal_flow.py` |
+| `session` | `SessionPage` | `screens/meal_flow.py` |
+| `inputIngredientsAM` | `InputIngredientsAMPage` | `screens/meal_flow.py` |
+
+### 5.3 Navigation Flow
+
+```mermaid
+flowchart LR
+    splash -->|tap| login
+    login -->|success| dashboard
+    login --> make_account
+    make_account -->|save| login
+
+    dashboard -->|Start Meal| inputIngredientsBM
+    inputIngredientsBM --> session
+    session -->|End Session| inputIngredientsAM
+    inputIngredientsAM -->|Finish Meal| dashboard
 
-### 5.3 Speech-to-Text Component
+    dashboard <-->|side nav| report_dashboard
+    dashboard <-->|side nav| profile
+    report_dashboard -->|View More| report
+    report --> transcript
 
-The STT module utilizes OpenAI's Whisper model (Base variant) through the Hugging Face Transformers library. The implementation features:
+    profile --> editProfile
+    profile -->|logout| login
+```
 
-- **Voice Activity Detection (VAD)**: RMS-based energy thresholding to detect speech onset
-- **Adaptive Recording**: Continuous audio capture with silence detection (2-second silence threshold)
-- **Timeout Handling**: 30-second maximum wait time for speech detection
-- **Streaming Processing**: Chunk-based audio processing (0.2-second chunks) for real-time responsiveness
+**Main shell screens** (dashboard, report dashboard, profile, report, transcript) share a left **side navigation** pattern defined in their respective KV files.
 
-The module initializes the ASR pipeline on import, enabling fast inference during conversation sessions.
+**Initial screen:** `splash` (first child in `KabuKids.kv`). User taps anywhere to continue to login.
 
-### 5.4 Large Language Model Integration
+### 5.4 Reusable Widgets
 
-The LLM module integrates with Ollama, a local LLM inference server, using the `qwen2.5:7b` model. Key architectural features include:
+| Widget | Location | Purpose |
+|--------|----------|---------|
+| `MealItem` | `widgets/meal_item.py` | Meal report card in report dashboard list |
+| `ColoredCheckBox` | `screens/meal_flow.py` | Styled checkbox for after-meal food tracking |
+| `SideNavItem`, `RoundedInput`, etc. | Various `.kv` files | KV-defined templates |
+
+### 5.5 App-Level UI State
 
-- **Conversation History Management**: JSON-based persistence with automatic history trimming (6000 character limit)
-- **Context Injection**: System messages containing child profile data, preferences, and conversation guidelines
-- **Response Parsing**: Structured extraction of response text and emotion labels from LLM output
-- **Fallback Mechanism**: Predefined question bank for graceful degradation when LLM inference fails
+| Property / field | Set by | Used for |
+|------------------|--------|----------|
+| `App.current_user` | Login, profile save | Full Children document for all screens |
+| `App.profile_image_path` | Image picker | Registration and profile picture |
+| `App.selected_meal_id` | `MealItem.go_to_report` | Which meal to show on report/transcript screens |
+
+---
 
-The conversation context is dynamically constructed from:
-- Child profile data (name, age, gender, likes, dislikes, goals)
-- Current meal ingredients
-- Conversation history
-- System-defined behavior guidelines
+## 6. Application State (`services/models.py`)
 
-### 5.5 Text-to-Speech Component
+Centralized in-memory state shared across screens:
 
-The TTS module employs the Kokoro TTS pipeline with the `af_sky` voice profile, designed for child-friendly interactions. The implementation:
+### Globals
+
+| Variable | Type | Purpose |
+|----------|------|---------|
+| `CURRENT_MEAL` | `dict` | Active meal being built across before-meal → session → after-meal |
+| `SAMPLE_REPORTS` | `dict[str, dict]` | Cached meal reports keyed by `_id` (populated after fetch or save) |
 
-- **Streaming Synthesis**: Generator-based audio production for low-latency playback
-- **Real-time Playback**: Direct audio output via sounddevice library
-- **Sample Rate**: 24kHz audio output for high-quality speech
+### Functions
 
-### 5.6 Facial Expression Recognition Component
+| Function | Purpose |
+|----------|---------|
+| `init_current_meal(user_id)` | Reset `CURRENT_MEAL` with a new UUID `_id` and empty fields |
+| `clear_current_meal()` | Clear the meal buffer |
+| `get_logged_in_user_id(current_user)` | Normalize `Children._id` to string |
+| `fetch_reports_for_user(user_id, callback)` | Query `meals_col` and invoke callback with `{id: doc}` dict |
 
-The FER module implements emotion detection using the `trpakov/vit-face-expression` Vision Transformer model. The architecture includes:
+Database reads for the report list run in a **background thread**; the callback updates UI on the main thread via Kivy `Clock`.
 
-- **Face Detection**: OpenCV Haar Cascade classifier for face localization
-- **Temporal Sampling**: Frame capture over 5-second intervals (0.1-second sampling rate)
-- **Emotion Aggregation**: Top-2 most common emotions from sampled frames
-- **Robustness**: Handles cases where no face is detected or FER pipeline fails
+### Session-scoped state (`screens/meal_flow.py`)
 
-The module processes video frames in real-time, extracting facial regions and classifying emotions to provide contextual information for the LLM's response generation.
+| Variable | Purpose |
+|----------|---------|
+| `hash_meal_final` | Module-level dict written when `SessionPage` ends; merged into `CURRENT_MEAL` on finish |
+| `SessionPage.full_transcript` | In-thread transcript before persistence |
+| `SessionPage._stop_event` | Signals the session loop to exit |
+
+---
 
-### 5.7 Conversation Engine Architecture
+## 7. Data Layer (`db.py`)
 
-The conversation engine (`SessionPage` in `screens/meal_flow.py`) orchestrates all AI/ML components within a threaded execution model:
+Single source of truth for MongoDB access. All application code imports from here.
 
-**Initialization Phase**:
-1. Load child profile from MongoDB
-2. Initialize TTS pipeline
-3. Initialize camera capture
-4. Reset conversation history with personalized system context
-5. Start main conversation loop in background thread
+```python
+client → database "kabu_db_user"
+├── children_col  →  collection "Children"
+└── meals_col     →  collection "Meals"
+```
+
+| Setting | Value |
+|---------|-------|
+| Connection | `MONGODB_URI` environment variable (fallback default in source) |
+| TLS | `certifi` CA bundle |
+| API version | MongoDB Server API v1 |
+| Selection timeout | 5 seconds |
 
-**Main Loop Execution**:
-1. Spawn parallel threads for audio capture and FER analysis
-2. Wait for thread completion with timeout mechanisms
-3. Combine transcribed text and detected emotions
-4. Generate LLM response with combined context
-5. Parse response for text and emotion labels
-6. Synthesize speech output
-7. Update transcript and UI emotion display
-8. Repeat until session termination
+### Usage by feature
 
-**Cleanup Phase**:
-1. Generate conversation analysis (recommendations, disliked foods)
-2. Generate meal summary
-3. Assemble final meal document
-4. Release camera resources
-5. Store meal data in global state for persistence
+| Operation | Collection | Call sites |
+|-----------|------------|------------|
+| Login | `Children` | `children_col.find_one({username, password})` |
+| Register | `Children` | `children_col.insert_one(child_doc)` |
+| Edit profile | `Children` | `children_col.update_one({"_id": ...}, {"$set": ...})` |
+| Transcript dislike feedback | `Children` | `$push` to `dislikes` array |
+| Fetch user meals | `Meals` | `meals_col.find({"user_id": ...})` |
+| Save meal | `Meals` | `meals_col.insert_one` / `replace_one` |
+| Report detail | `Meals` | `meals_col.find_one({"_id": meal_id})` |
 
-### 5.8 Context Management
+There are no helper wrappers — screens call PyMongo collection methods directly.
 
-The system maintains conversation context through a hierarchical context injection strategy:
+---
 
-1. **System-level Context**: Core Kabu personality and behavior guidelines
-2. **User-level Context**: Child-specific information (demographics, preferences, goals)
-3. **Session-level Context**: Current meal ingredients and conversation history
-4. **Turn-level Context**: Current user input and detected emotions
+## 8. AI / ML Pipeline (`mainsession/`)
 
-This multi-level context enables personalized, contextually-aware responses while maintaining conversation coherence.
+The meal session runs a **parallel capture loop**: microphone and camera work at the same time each turn.
 
-## 6. Data Persistence Layer Architecture
+```mermaid
+sequenceDiagram
+    participant UI as SessionPage
+    participant STT as stt.py
+    participant FER as fer.py
+    participant LLM as llm.py
+    participant TTS as tts.py
+    participant Utils as utils.py
 
-### 6.1 Database Architecture
+    UI->>STT: audio_task (thread)
+    UI->>FER: fer_task (thread)
+    STT-->>UI: transcribed text or NO_SPEECH
+    FER-->>UI: top 2 emotion labels
+    UI->>LLM: get_kabu_response(prompt + emotions)
+    LLM->>Utils: load/trim/save conversation_history.json
+    LLM-->>UI: Kabu reply text
+    UI->>Utils: parse_kabu_reply (text + Kabu_emotion)
+    UI->>TTS: tts_kokoro(parsed text)
+    UI->>UI: update emotion video + append transcript
+```
 
-The system employs MongoDB Atlas, a cloud-hosted NoSQL database, for data persistence. The database connection is established using PyMongo with TLS/SSL encryption and server API version 1.
+### 8.1 `stt.py` — Speech-to-Text
 
-### 6.2 Data Model
+- **Provider:** Groq API (`whisper-large-v3-turbo`)
+- **Input:** `sounddevice` microphone stream at 16 kHz
+- **VAD:** RMS energy threshold; 2 seconds of silence ends recording; 30 s max wait for speech start
+- **Returns:** numpy audio array, `"NO_SPEECH"`, or `None`
+- `get_transcribed_audio(audio)` wraps PCM as in-memory WAV and posts to Groq transcription
 
-The database schema consists of two primary collections:
+### 8.2 `fer.py` — Facial Expression Recognition
 
-**Children Collection**:
-- Stores user profile information
-- Fields: `_id`, `name`, `username`, `password`, `birthday`, `gender`, `likes`, `dislikes`, `goals`, `profile_picture`, `created_at`
-- Indexed on `username` for authentication queries
+- **Provider:** Local Hugging Face `transformers` pipeline
+- **Model:** `trpakov/vit-face-expression`
+- **Face detection:** OpenCV Haar cascade (`haarcascade_frontalface_default`)
+- **Capture:** Samples frames for 5 seconds at 0.1 s intervals from a shared OpenCV `VideoCapture`
+- **Output:** Top 2 emotion labels by frequency (e.g. `["happy", "neutral"]`), or `[]`
 
-**Meals Collection**:
-- Stores meal session records
-- Fields: `_id`, `user_id`, `date`, `start_time`, `end_time`, `transcript`, `summary`, `conversation_suggestions`, `ingredient_suggestions`, `food_before_meal`, `food_not_finished`, `portion_before_image`, `portion_after_image`, `created_at`
-- Indexed on `user_id` for user-specific queries
+### 8.3 `llm.py` — Language Model
 
-### 6.3 Data Access Patterns
+- **Provider:** Groq chat completions
+- **Model:** `openai/gpt-oss-120b`
+- **`get_kabu_response(prompt)`** — Multi-turn: loads `conversation_history.json`, appends user turn, trims to ~6000 chars, saves history, returns assistant text. Temperature 0.85.
+- **`get_direct_response(prompt)`** — Single-turn stateless call for post-session analysis and summary. Temperature 0.3.
+- **Fallback:** Random child-friendly question if API fails
 
-The system implements several data access patterns:
+### 8.4 `tts.py` — Text-to-Speech
 
-- **Synchronous Queries**: User authentication, profile retrieval
-- **Asynchronous Queries**: Meal report fetching (executed in background threads)
-- **Batch Operations**: Bulk meal retrieval for dashboard display
-- **Document Updates**: Incremental updates to user preferences (e.g., dislikes array)
+- **Function name:** `tts_kokoro` (legacy name; does **not** use the Kokoro Python package)
+- **Provider:** Groq audio speech API
+- **Model:** `canopylabs/orpheus-v1-english`, voice `"austin"`
+- **Playback:** `sounddevice` (`sd.play` + `sd.wait`)
 
-### 6.4 Conversation History Persistence
+### 8.5 `utils.py` — Helpers
 
-Conversation history is maintained in two forms:
+| Area | Functions |
+|------|-----------|
+| Conversation history | `load_history`, `save_history`, `trim_history`, `reset_history` |
+| LLM response parsing | `parse_kabu_reply`, `parse_kabu_reply_final`, `extract_topic_robust` |
+| Child context | `compute_age_from(birthday)` |
+| Topic memory | `switch_topic`, `increment_topic_on_user_mention`, etc. — **implemented but not wired into the session loop** |
 
-1. **Session History**: JSON file (`conversation_history.json`) for LLM context during active sessions
-2. **Persistent History**: Embedded within meal documents in MongoDB for long-term storage
+### 8.6 `config.py`
 
-This dual-persistence model enables efficient context management during sessions while maintaining historical records for analysis and reporting.
+| Constant | Default | Used by |
+|----------|---------|---------|
+| `SAMPLE_RATE` | 16000 | `stt.py` |
+| `CAMERA_INDEX` | 0 | `meal_flow.py`, `fer.py` |
+| `HISTORY_FILE` | `conversation_history.json` | `utils.py`, `llm.py` |
+| `PROCESS_TIMEOUT` | 3.0 | `stt.py` |
+| `DURATION` | 10 | **Unused** |
+| `OPENROUTER_API_KEY` | env var | **Unused** |
 
-## 7. Inter-Layer Communication Patterns
+### 8.7 Emotion Videos
 
-### 7.1 Presentation-to-Business Logic Communication
+`SessionPage.update_emotion_image()` maps parsed Kabu emotions to MP4 files in `screens/KabuEmotions/`:
 
-Communication occurs through:
-- **Direct Function Calls**: Screen classes invoke business logic functions
-- **State Sharing**: Global variables (`CURRENT_MEAL`, `SAMPLE_REPORTS`) accessed by both layers
-- **Event Callbacks**: Asynchronous operations use callback functions to update UI
+- `neutral.mp4`, `happy.mp4`, `excited.mp4`, `sad.mp4`, `listening.mp4`
 
-### 7.2 Business Logic-to-AI/ML Communication
+---
 
-The business logic layer coordinates AI/ML components through:
-- **Module Imports**: Direct import of AI/ML modules
-- **Function Invocation**: Sequential calls to STT, LLM, TTS, FER functions
-- **State Passing**: Meal state and user context passed to AI/ML components
+## 9. Core User Flows
 
-### 7.3 AI/ML-to-Data Layer Communication
+### 9.1 Authentication (`screens/auth.py`)
 
-AI/ML components interact with the data layer through:
-- **MongoDB Module**: `mainsession/mongodb.py` provides database operations
-- **Profile Loading**: Child profile retrieved at session start
-- **Meal Persistence**: Final meal document assembled and stored post-session
+**Login**
+1. User enters username and password
+2. `children_col.find_one({"username": ..., "password": ...})` — plaintext match
+3. On success: `app.current_user = user`, navigate to `dashboard`
 
-### 7.4 Data Layer Communication
+**Registration (`MakeAccountPage`)**
+1. Collect name, birthday (MM/DD/YYYY), gender, username, password
+2. Tag inputs for likes, dislikes, goals (max 32 chars per tag)
+3. Optional profile image from `app.profile_image_path`
+4. Insert document with `_id = str(uuid.uuid4())` and `created_at`
+5. Navigate to `login`
 
-The data layer provides:
-- **Connection Pooling**: Single MongoDB client instance shared across modules
-- **Collection Access**: Direct collection references for query operations
-- **Error Handling**: Try-except blocks with fallback behaviors
+There is no password hashing, session token, or username uniqueness check.
 
-## 8. Threading and Concurrency Architecture
+### 9.2 Meal Flow (`screens/meal_flow.py`)
 
-### 8.1 Threading Model
+#### Phase 1 — Before meal (`InputIngredientsBMPage`)
 
-The system employs a multi-threaded architecture with the following thread types:
+- `on_enter` calls `init_current_meal(user_id)` for a fresh meal per session
+- User adds food tags → synced to `CURRENT_MEAL["food_before_meal"]`
+- Next → `session`
+
+#### Phase 2 — Kabu session (`SessionPage`)
+
+**Start:** `on_pre_enter` → `start_session()` → daemon thread `_run_session_loop`
+
+**Each loop iteration:**
+1. Show `listening.mp4`
+2. Run `audio_task` and `fer_task` in parallel threads
+3. Skip turn if no speech detected
+4. Build prompt: child text + observed emotions
+5. `llm.get_kabu_response(prompt)` with system context from child profile + food list + Kabu persona rules
+6. `utils.parse_kabu_reply` → spoken text + `Kabu_emotion`
+7. `tts.tts_kokoro(text)` + update emotion video
+8. Append to `full_transcript`
 
-1. **Main UI Thread**: Kivy's main event loop for UI rendering and user interaction
-2. **Session Thread**: Background thread for conversation loop execution
-3. **Audio Thread**: Parallel thread for speech recording and transcription
-4. **FER Thread**: Parallel thread for facial expression analysis
-5. **Database Thread**: Background threads for non-blocking database operations
+**System prompt includes:** child name, gender, age, likes, dislikes, goals, and `food_before_meal` from `children_col.find_one`.
 
-### 8.2 Thread Synchronization
+**End:** User taps "End Session" → `stop_session()` → loading popup → poll until `session_finished`
 
-Thread synchronization is achieved through:
+**Cleanup (`finally` block):**
+- `llm.get_direct_response(ANALYSIS_PROMPT)` → conversation suggestions + ingredient alternatives
+- `llm.get_direct_response(summary prompt)` → 5-sentence meal summary (with transcript fallback)
+- Write results to `hash_meal_final` (times, date, transcript, summary, suggestions)
+- Navigate to `inputIngredientsAM`
+
+#### Phase 3 — After meal (`InputIngredientsAMPage`)
 
-- **Thread Events**: `threading.Event` for session termination signaling
-- **Thread Joins**: Timeout-based joins to prevent indefinite blocking
-- **Shared State**: Thread-safe access to global state variables (with appropriate locking considerations)
-- **Daemon Threads**: Background threads marked as daemon for automatic cleanup
+- Checkboxes for each `food_before_meal` item (finished vs not finished)
+- `finish_meal()` merges `hash_meal_final` into `CURRENT_MEAL`, sets food completion fields, `meals_col.insert_one`, updates `SAMPLE_REPORTS`, clears buffer
+- Navigate to `dashboard`
+
+Timestamps use **Philippine Time (UTC+8)** via `now_pht()` for display formatting.
+
+### 9.3 Reports (`screens/dashboard_report.py`)
+
+| Screen | Data source | Behavior |
+|--------|-------------|----------|
+| `DashboardPage` | — | Home: Start Meal button + fun fact. Does not list meals. |
+| `ReportDashboardPage` | `fetch_reports_for_user` → `SAMPLE_REPORTS` | Background fetch, populate `MealItem` widgets sorted newest-first |
+| `ReportPage` | `SAMPLE_REPORTS` + `meals_col.find_one` | Summary, foods, suggestions for `app.selected_meal_id` |
+| `TranscriptPage` | `SAMPLE_REPORTS` | Chat-style transcript; dislike feedback on Kabu messages |
 
-### 8.3 Concurrency Patterns
+**Dislike feedback:** Tapping a Kabu message opens a popup; reason is `$push`ed to `children_col.dislikes` as a formatted string.
 
-The system implements several concurrency patterns:
+### 9.4 Profile (`screens/profile.py`)
 
-- **Producer-Consumer**: Audio/FER threads produce data consumed by main session loop
-- **Parallel Processing**: Audio and FER analysis execute concurrently
-- **Asynchronous I/O**: Database operations in background threads prevent UI blocking
+| Screen | Behavior |
+|--------|----------|
+| `ProfilePage` | `on_pre_enter` loads `current_user` into properties; renders tag lists |
+| `EditProfilePage` | Edit fields and tags; `children_col.update_one`; refreshes `app.current_user` |
 
-## 9. Error Handling and Resilience
+Logout navigates to `login` but does not clear `current_user` or `SAMPLE_REPORTS` in code.
 
-### 9.1 Error Handling Strategy
+---
 
-The architecture implements a multi-level error handling strategy:
+## 10. Data Models
 
-- **Component-level**: Try-except blocks in each module with fallback behaviors
-- **Layer-level**: Error propagation with graceful degradation
-- **Application-level**: User-facing error messages via popup dialogs
+### Children document
 
-### 9.2 Resilience Mechanisms
+```json
+{
+  "_id": "uuid-string",
+  "name": "string",
+  "username": "string",
+  "password": "string",
+  "birthday": "MM/DD/YYYY",
+  "gender": "string",
+  "likes": ["string"],
+  "dislikes": ["string"],
+  "goals": ["string"],
+  "profile_picture": "local file path",
+  "created_at": "datetime UTC"
+}
+```
 
-Key resilience features include:
+`dislikes` also receives feedback strings appended from the transcript screen.
 
-- **Model Fallbacks**: Predefined questions when LLM inference fails
-- **Empty Result Handling**: Graceful handling of no speech, no face detection
-- **Timeout Mechanisms**: Prevents indefinite blocking on audio/video operations
-- **Resource Cleanup**: Guaranteed camera release and thread termination
+### Meals document
 
-## 10. Performance Considerations
+```json
+{
+  "_id": "uuid-string",
+  "user_id": "Children._id",
+  "date": "July 6, 2026",
+  "start_time": "2:30 PM",
+  "end_time": "3:15 PM",
+  "transcript": [
+    {
+      "speaker": "child | kabu",
+      "text": "string",
+      "emotions": ["happy"],
+      "emotion": ["Happy"],
+      "timestamp": "string"
+    }
+  ],
+  "summary": "string",
+  "conversation_suggestions": ["string"],
+  "ingredient_suggestions": ["string or parsed dict entries"],
+  "food_before_meal": ["string"],
+  "food_finished": ["string"],
+  "food_not_finished": ["string"],
+  "food_after_meal": ["string"],
+  "portion_before_image": "string",
+  "portion_after_image": "string",
+  "created_at": "datetime UTC"
+}
+```
 
-### 10.1 Optimization Strategies
+**Note:** Seed data in `reports_data.json` uses a legacy `"role"` field instead of `"speaker"`. Live sessions use `"speaker"`.
 
-The architecture incorporates several performance optimizations:
+`portion_before_image` and `portion_after_image` are placeholder paths — portion-size capture screens were never implemented.
 
-- **Model Selection**: Lightweight models (Whisper Base, tiny variants) for faster inference
-- **History Trimming**: Conversation history limited to 6000 characters to reduce LLM context size
-- **Caching**: In-memory report cache (`SAMPLE_REPORTS`) for fast UI updates
-- **Parallel Processing**: Concurrent audio/video processing reduces overall latency
-- **Lazy Initialization**: ML models loaded on first use, not at application start
+---
 
-### 10.2 Performance Bottlenecks
+## 11. External Services
 
-Potential performance constraints include:
+| Service | Role | Module |
+|---------|------|--------|
+| **MongoDB Atlas** | User profiles and meal records | `db.py` |
+| **Groq API** | Whisper STT, GPT-OSS-120B chat, Orpheus TTS | `stt.py`, `llm.py`, `tts.py` |
+| **Hugging Face Transformers** | Local ViT facial expression model | `fer.py` |
+| **OpenCV** | Camera capture, Haar face detection | `fer.py`, `meal_flow.py` |
+| **sounddevice** | Microphone input and speaker output | `stt.py`, `tts.py` |
 
-- **LLM Inference**: Local Ollama model requires sufficient RAM/CPU resources
-- **Real-time Processing**: Audio transcription and FER analysis may lag on slower hardware
-- **UI Thread Blocking**: Long-running operations must remain in background threads
-- **Database Latency**: Network latency to MongoDB Atlas may affect query performance
+### Not used in current runtime (despite appearing in `requirement.txt` or old docs)
 
-## 11. Security Architecture
+- Ollama
+- OpenAI SDK (imported in `meal_flow.py` but unused)
+- Kokoro Python package (`KPipeline` imported but unused)
+- Local Whisper / Hugging Face ASR
+- faiss-cpu
+- OpenRouter
 
-### 11.1 Authentication Mechanism
+### API key management
 
-The system implements a simple username/password authentication model:
-- Credentials stored in MongoDB Children collection
-- Plaintext password storage (security improvement recommended)
-- Session-based authentication via `App.current_user` state
+`.env.example` documents `GROQ_API_KEY`, but `stt.py`, `llm.py`, and `tts.py` currently use **hardcoded keys in source**. `groq` is also missing from `requirement.txt` (along with `kivy`).
 
-### 11.2 Data Security
+---
 
-Security measures include:
-- **TLS/SSL**: Encrypted connections to MongoDB Atlas
-- **Certificate Validation**: Certifi library for SSL certificate management
-- **Connection Timeouts**: 5-second timeout prevents indefinite connection attempts
+## 12. Utility Scripts
 
-### 11.3 Security Considerations
+| Script | Purpose |
+|--------|---------|
+| `insert_meals.py` | Bulk-insert seed meals from `reports_data.json` into `Meals` |
+| `test_mongo.py` | Standalone MongoDB connection test (own client, not `db.py`) |
 
-Areas for security enhancement:
-- Password hashing (bcrypt or similar)
-- Environment variable management for sensitive credentials
-- Input validation and sanitization
-- Session timeout mechanisms
+---
 
-## 12. Conclusion
+## 13. Known Limitations and Technical Debt
 
-The KabuKids system architecture demonstrates a well-structured, layered design that effectively integrates multiple AI/ML components with a user-friendly interface. The parallel processing architecture enables real-time conversational interactions, while the modular component design facilitates maintainability and extensibility. The separation of concerns across presentation, business logic, AI/ML, and data layers provides a solid foundation for future enhancements and scalability improvements.
+| Area | Issue |
+|------|-------|
+| **Security** | Plaintext passwords; MongoDB URI and Groq API keys in source |
+| **Legacy entry point** | `KabuKids.py` duplicates screens; `SessionPage` is non-functional |
+| **Logout** | Does not clear `current_user` or cached reports |
+| **Portion images** | Fields exist but capture UI was never built |
+| **Topic memory** | `utils.py` topic tracking not connected to LLM or session |
+| **Dependencies** | `requirement.txt` is duplicated and missing `groq`, `kivy` |
+| **Transcript schema** | `"speaker"` (live) vs `"role"` (seed data) inconsistency |
+| **ReportPage** | Portion image binding commented out; debug log noise |
+| **Dashboard** | `load_reports_from_db` exists but home dashboard does not call it |
 
+---
 
+## 14. Running the Application
 
+```bash
+# Install dependencies (add kivy and groq manually until requirement.txt is updated)
+pip install -r requirement.txt
+pip install kivy groq
 
+# Set MongoDB URI (recommended over hardcoded default)
+set MONGODB_URI=mongodb+srv://...
+
+# Launch
+python app_main.py
+```
+
+---
+
+## 15. Related Documentation
+
+- `FER_IMPLEMENTATION.md` — Facial expression recognition details (verify against current `fer.py` and `meal_flow.py` if updated)
+
+---
+
+*Last updated to reflect the modular architecture: `app_main.py`, `screens/`, `services/models.py`, `db.py`, and `mainsession/` Groq-based AI pipeline.*

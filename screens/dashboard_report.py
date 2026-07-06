@@ -369,6 +369,9 @@ class TranscriptPage(Screen):
     def _plain_emotion(self, emotion):
         if emotion is None:
             return ""
+        if isinstance(emotion, (list, tuple, set)):
+            parts = [str(item).strip() for item in emotion if str(item).strip()]
+            return ", ".join(parts)
         text = str(emotion).strip()
         text = text.strip("[]").strip("'").strip('"')
         return text
@@ -580,7 +583,9 @@ class TranscriptPage(Screen):
         for msg in report.get("transcript", []):
             role = msg.get("speaker", "child")
             text = msg.get("text", "")
-            emotion = msg.get("emotion", "")
+            emotion = msg.get("emotion")
+            if not emotion:
+                emotion = msg.get("emotions", "")
 
             time_val = None
             for time_key in ("time", "timestamp", "time_str", "created_at"):
