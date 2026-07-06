@@ -9,7 +9,7 @@ from kivy.uix.video import Video
 from mainsession.config import CAMERA_INDEX
 from services.models import CURRENT_MEAL, init_current_meal, clear_current_meal, SAMPLE_REPORTS, get_logged_in_user_id
 from pymongo.errors import DuplicateKeyError
-from db import meals_col
+from db import meals_col, children_col
 from kivy.app import App
 from kivy.metrics import dp
 from datetime import datetime
@@ -22,7 +22,7 @@ import os
 from kivy.clock import Clock
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
-from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1, config
+from mainsession import stt, llm, tts, fer, utils, config
 
 import time
 import threading
@@ -48,12 +48,6 @@ PHT = timezone(timedelta(hours=8))
 
 def now_pht():
     return datetime.now(PHT)
-
-class PortionSizeBeforePage(Screen):
-    pass
-
-class PortionSizeAfterPage(Screen):
-    pass
 
 class InputIngredientsBMPage(Screen):
     def on_enter(self):
@@ -694,7 +688,7 @@ class SessionPage(Screen):
         try:
  
             Logger.info("Kabu: loading child_data")
-            child_data = mongodb.get_child_by_id(CURRENT_MEAL.get("user_id"))
+            child_data = children_col.find_one({"_id": CURRENT_MEAL.get("user_id")})
             Logger.info("Kabu: child_data loaded: %s", str(child_data.get("name")))
             
             USER_CONTEXT = f"""

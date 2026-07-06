@@ -1,7 +1,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty, ListProperty
 from kivy.clock import Clock
-from db import db
+from db import children_col
 import os
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
@@ -542,9 +542,9 @@ class EditProfilePage(Screen):
             if password:
                 update["password"] = password
 
-            result = db["Children"].update_one({"_id": user_id}, {"$set": update})
+            result = children_col.update_one({"_id": user_id}, {"$set": update})
             if result.matched_count:
-                updated = db["Children"].find_one({"_id": user_id})
+                updated = children_col.find_one({"_id": user_id})
                 app.current_user = updated
 
                 try:

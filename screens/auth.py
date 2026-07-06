@@ -3,7 +3,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.app import App
 from kivy.properties import StringProperty
-from db import db, children_col
+from db import children_col
 import uuid
 from datetime import datetime
 from kivy.uix.boxlayout import BoxLayout
@@ -406,7 +406,7 @@ class MakeAccountPage(Screen):
             }
 
             # Save to MongoDB
-            result = db["Children"].insert_one(child_doc)
+            result = children_col.insert_one(child_doc)
             print(f"✅ Child profile saved with ID: {result.inserted_id}")
 
             self.show_message("Profile saved successfully!")

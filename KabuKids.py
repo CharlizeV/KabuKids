@@ -16,9 +16,6 @@ from colors import SECONDARY_COLOR, DARK_COLOR
 from kivy.clock import Clock
 import threading
 import os
-import certifi
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
 
 from kivy.core.window import Window
 from kivy.utils import platform
@@ -37,19 +34,8 @@ except ImportError:
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'mainsession'))
-from mainsession import stt, llm, tts, mongodb, fer, utils, Kabu_V1
-
-# ====== MongoDB Setup ======
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://kabu_db_user:pass101pass101@cluster0.kxhmgjt.mongodb.net/")
-client = MongoClient(
-    MONGODB_URI,
-    server_api=ServerApi("1"),
-    tls=True,
-    tlsCAFile=certifi.where(),
-    serverSelectionTimeoutMS=5000,
-)
-db = client["kabu_db_user"]
-meals_col = db["Meals"]
+from mainsession import stt, llm, tts, fer, utils
+from db import meals_col, children_col
 
 # Global variable to hold fetched reports (will be filled after async load)
 SAMPLE_REPORTS = {}
@@ -211,7 +197,7 @@ class LoginPage(Screen):
                 return
 
             # Query the Children collection for matching credentials
-            user = db["Children"].find_one({"username": username, "password": password})
+            user = children_col.find_one({"username": username, "password": password})
             if user:
                 app = App.get_running_app()
                 app.current_user = user  # store the user document on the app instance
@@ -374,7 +360,7 @@ class MakeAccountPage(Screen):
             }
 
             # Save to MongoDB
-            result = db["Children"].insert_one(child_doc)
+            result = children_col.insert_one(child_doc)
             print(f"✅ Child profile saved with ID: {result.inserted_id}")
 
             self.show_message("Profile saved successfully!")
@@ -853,10 +839,10 @@ class TranscriptPage(Screen):
                 if user:
                     user_id = user.get("_id") if isinstance(user, dict) else getattr(user, "_id", None)
                     if user_id:
-                        db["Children"].update_one({"_id": user_id}, {"$push": {"dislikes": entry}})
+                        children_col.update_one({"_id": user_id}, {"$push": {"dislikes": entry}})
                         # refresh in-memory user doc
                         try:
-                            updated = db["Children"].find_one({"_id": user_id})
+                            updated = children_col.find_one({"_id": user_id})
                             app.current_user = updated
                         except Exception:
                             pass
@@ -878,12 +864,6 @@ class TranscriptPage(Screen):
         content.add_widget(submit)
         popup.open()
         self.popup = popup
-
-class PortionSizeBeforePage(Screen):
-    pass
-
-class PortionSizeAfterPage(Screen):
-    pass
 
 class InputIngredientsBMPage(Screen):
     def on_enter(self):
@@ -1441,9 +1421,9 @@ class EditProfilePage(Screen):
             if password:
                 update["password"] = password
 
-            result = db["Children"].update_one({"_id": user_id}, {"$set": update})
+            result = children_col.update_one({"_id": user_id}, {"$set": update})
             if result.matched_count:
-                updated = db["Children"].find_one({"_id": user_id})
+                updated = children_col.find_one({"_id": user_id})
                 app.current_user = updated
 
                 # update UI images immediately in other screens if present

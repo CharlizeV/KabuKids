@@ -6,7 +6,7 @@ import threading
 import uuid
 from widgets.meal_item import MealItem
 from services.models import SAMPLE_REPORTS, fetch_reports_for_user
-from db import meals_col, db
+from db import meals_col, children_col
 from kivy.metrics import dp, sp
 from datetime import datetime
 
@@ -20,7 +20,6 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from bson.objectid import ObjectId
-from mainsession import mongodb
 
 # Fallback color constants if not defined elsewhere in the project
 from colors import DARK_COLOR, LIGHT_COLOR, ACCENT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR, SUPER_LIGHT
@@ -288,7 +287,7 @@ class ReportPage(Screen):
             self.summary_text = "Report not found."
             return
         
-        data = mongodb.find_meal(meal_id)
+        data = meals_col.find_one({"_id": meal_id})
         Logger.info(data)
         Logger.info("Here")
         Logger.info("Here")
@@ -719,10 +718,10 @@ class TranscriptPage(Screen):
                 if user:
                     user_id = user.get("_id") if isinstance(user, dict) else getattr(user, "_id", None)
                     if user_id:
-                        db["Children"].update_one({"_id": user_id}, {"$push": {"dislikes": entry}})
+                        children_col.update_one({"_id": user_id}, {"$push": {"dislikes": entry}})
                         # refresh in-memory user doc
                         try:
-                            updated = db["Children"].find_one({"_id": user_id})
+                            updated = children_col.find_one({"_id": user_id})
                             app.current_user = updated
                         except Exception:
                             pass
