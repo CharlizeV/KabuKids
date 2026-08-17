@@ -1,3 +1,5 @@
+# Requires Python 3.12.10
+
 # Core ML / infra (install torch separately for matching CUDA if needed)
 transformers>=4.35.2
 accelerate>=0.20.3
